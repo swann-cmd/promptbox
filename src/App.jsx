@@ -6,19 +6,29 @@ import { supabase } from "./lib/supabase";
 const MODELS = ["通用", "ChatGPT", "Claude", "Gemini", "Midjourney", "Sora"];
 
 const DEFAULT_CATEGORIES = [
+  { name: "产品", slug: "product" },
   { name: "写作", slug: "writing" },
-  { name: "编程", slug: "coding" },
-  { name: "分析", slug: "analysis" },
-  { name: "图片", slug: "image" },
+  { name: "数据", slug: "data" },
+  { name: "学习", slug: "learning" },
+  { name: "AI", slug: "ai" },
+  { name: "创业", slug: "startup" },
+  { name: "思维", slug: "thinking" },
+  { name: "个人效率", slug: "productivity" },
+  { name: "开发", slug: "development" },
   { name: "视频", slug: "video" },
 ];
 
 const categoryColors = {
-  writing: { bg: "bg-blue-50", text: "text-blue-600", dot: "bg-blue-400", accent: "#3b82f6" },
-  coding: { bg: "bg-violet-50", text: "text-violet-600", dot: "bg-violet-400", accent: "#7c3aed" },
-  analysis: { bg: "bg-amber-50", text: "text-amber-600", dot: "bg-amber-400", accent: "#d97706" },
-  image: { bg: "bg-emerald-50", text: "text-emerald-600", dot: "bg-emerald-400", accent: "#059669" },
-  video: { bg: "bg-rose-50", text: "text-rose-600", dot: "bg-rose-400", accent: "#e11d48" },
+  product: { bg: "bg-blue-50", text: "text-blue-600", dot: "bg-blue-400", accent: "#3b82f6" },
+  writing: { bg: "bg-violet-50", text: "text-violet-600", dot: "bg-violet-400", accent: "#7c3aed" },
+  data: { bg: "bg-emerald-50", text: "text-emerald-600", dot: "bg-emerald-400", accent: "#059669" },
+  learning: { bg: "bg-amber-50", text: "text-amber-600", dot: "bg-amber-400", accent: "#d97706" },
+  ai: { bg: "bg-rose-50", text: "text-rose-600", dot: "bg-rose-400", accent: "#e11d48" },
+  startup: { bg: "bg-cyan-50", text: "text-cyan-600", dot: "bg-cyan-400", accent: "#0891b2" },
+  thinking: { bg: "bg-purple-50", text: "text-purple-600", dot: "bg-purple-400", accent: "#9333ea" },
+  productivity: { bg: "bg-green-50", text: "text-green-600", dot: "bg-green-400", accent: "#22c55e" },
+  development: { bg: "bg-indigo-50", text: "text-indigo-600", dot: "bg-indigo-400", accent: "#6366f1" },
+  video: { bg: "bg-orange-50", text: "text-orange-600", dot: "bg-orange-400", accent: "#f97316" },
 };
 
 const APP_FONT = { fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif" };
@@ -800,7 +810,7 @@ function MainApp({ user, onLogout }) {
 
       if (error) throw error;
 
-      // 如果没有分类，自动创建默认分类（只创建一次）
+      // 如果没有分类，自动创建默认分类
       if (!data || data.length === 0) {
         console.log("检测到用户没有分类，正在创建默认分类...");
         const categories = DEFAULT_CATEGORIES.map(cat => ({
@@ -816,14 +826,54 @@ function MainApp({ user, onLogout }) {
 
         if (insertError) {
           console.error("创建默认分类失败:", insertError);
-          // 即使失败也设置空数组，避免无限重试
           setCategories([]);
         } else {
           console.log("默认分类创建成功:", newData);
           setCategories(newData || []);
         }
       } else {
-        setCategories(data);
+        // 检查是否需要更新到新的分类系统
+        const oldSlugs = ['writing', 'coding', 'analysis', 'image', 'video'];
+        const hasOldCategories = data.some(cat => oldSlugs.includes(cat.slug));
+
+        if (hasOldCategories) {
+          console.log("检测到旧版分类，正在更新到新的分类系统...");
+
+          // 删除旧的5个分类
+          const { error: deleteError } = await supabase
+            .from("categories")
+            .delete()
+            .in('slug', oldSlugs)
+            .eq("user_id", user.id);
+
+          if (deleteError) {
+            console.error("删除旧分类失败:", deleteError);
+          } else {
+            console.log("旧分类已删除");
+
+            // 创建新的8个分类
+            const newCategories = DEFAULT_CATEGORIES.map(cat => ({
+              user_id: user.id,
+              name: cat.name,
+              slug: cat.slug
+            }));
+
+            const { data: newData, error: insertError } = await supabase
+              .from("categories")
+              .insert(newCategories)
+              .select();
+
+            if (insertError) {
+              console.error("创建新分类失败:", insertError);
+              setCategories(data);
+            } else {
+              console.log("新分类创建成功:", newData);
+              setCategories(newData || []);
+            }
+          }
+        } else {
+          setCategories(data);
+        }
       }
     } catch (error) {
       console.error("加载分类失败:", error);
