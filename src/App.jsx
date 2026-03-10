@@ -288,9 +288,31 @@ function AuthPage({ onLogin }) {
 
 // ─── Detail Modal ─────────────────────────────────────────────────────────────
 
-function DetailModal({ prompt, onClose, onCopy }) {
+function DetailModal({ prompt, onClose, onCopy, onUpdate, categories, models }) {
   if (!prompt) return null;
   const colors = categoryColors[prompt.categorySlug] || {};
+  const [isEditing, setIsEditing] = useState(false);
+  const [form, setForm] = useState({ title: prompt.title, content: prompt.content, categoryId: prompt.categoryId, model: prompt.model });
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!form.title.trim() || !form.content.trim()) return;
+    setSaving(true);
+    try {
+      await onUpdate(prompt.id, form);
+      setIsEditing(false);
+    } catch (error) {
+      console.error("更新失败:", error);
+      alert("更新失败: " + error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setForm({ title: prompt.title, content: prompt.content, categoryId: prompt.categoryId, model: prompt.model });
+    setIsEditing(false);
+  };
 
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
@@ -303,50 +325,127 @@ function DetailModal({ prompt, onClose, onCopy }) {
         <div className="px-6 pt-6 pb-4 border-b border-gray-50">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
-              <h2 className="text-lg font-semibold text-gray-900 leading-snug mb-2.5">{prompt.title}</h2>
+              {isEditing ? (
+                <input
+                  className="w-full text-lg font-semibold text-gray-900 leading-snug mb-2.5 border-b-2 border-blue-500 focus:outline-none pb-1"
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  placeholder="提示词标题"
+                />
+              ) : (
+                <h2 className="text-lg font-semibold text-gray-900 leading-snug mb-2.5">{prompt.title}</h2>
+              )}
               <div className="flex flex-wrap items-center gap-2">
-                <CategoryBadge categorySlug={prompt.categorySlug} categoryName={prompt.categoryName} />
-                <span className="text-xs text-gray-400 bg-gray-50 px-2.5 py-1 rounded-full font-medium">{prompt.model}</span>
+                {isEditing ? (
+                  <>
+                    <select
+                      className="text-xs border border-gray-200 rounded-lg px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 bg-white"
+                      value={form.categoryId}
+                      onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
+                    >
+                      {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                    <select
+                      className="text-xs border border-gray-200 rounded-lg px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 bg-white"
+                      value={form.model}
+                      onChange={(e) => setForm({ ...form, model: e.target.value })}
+                    >
+                      {models.map((m) => <option key={m} value={m}>{m}</option>)}
+                    </select>
+                  </>
+                ) : (
+                  <>
+                    <CategoryBadge categorySlug={prompt.categorySlug} categoryName={prompt.categoryName} />
+                    <span className="text-xs text-gray-400 bg-gray-50 px-2.5 py-1 rounded-full font-medium">{prompt.model}</span>
+                  </>
+                )}
               </div>
             </div>
-            <button
-              onClick={onClose}
-              className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-            >
-              <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <div className="flex items-center gap-2">
+              {isEditing ? (
+                <>
+                  <button
+                    onClick={handleCancel}
+                    disabled={saving}
+                    className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors disabled:opacity-50"
+                    title="取消"
+                  >
+                    <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    disabled={saving || !form.title.trim() || !form.content.trim()}
+                    className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {saving ? "保存中..." : "保存"}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-blue-50 hover:bg-blue-100 transition-colors"
+                    title="编辑"
+                  >
+                    <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={onClose}
+                    className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                  >
+                    <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Content */}
         <div className="px-6 py-5 overflow-y-auto" style={{ maxHeight: "calc(85vh - 200px)" }}>
-          <div className="bg-gray-50 rounded-2xl p-4">
-            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{prompt.content}</p>
-          </div>
+          {isEditing ? (
+            <textarea
+              className="w-full bg-gray-50 rounded-2xl p-4 text-sm text-gray-700 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 border-2 border-transparent focus:border-blue-400 transition-all"
+              rows={12}
+              value={form.content}
+              onChange={(e) => setForm({ ...form, content: e.target.value })}
+              placeholder="输入提示词内容..."
+            />
+          ) : (
+            <div className="bg-gray-50 rounded-2xl p-4">
+              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{prompt.content}</p>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
-        <div className="px-6 pb-6 pt-3 border-t border-gray-50">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1.5 text-xs text-gray-400">
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-                使用 <span className="font-semibold text-gray-600">{prompt.usageCount}</span> 次
+        {!isEditing && (
+          <div className="px-6 pb-6 pt-3 border-t border-gray-50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  使用 <span className="font-semibold text-gray-600">{prompt.usageCount}</span> 次
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  {new Date(prompt.createdAt).toLocaleDateString('zh-CN')}
+                </div>
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-gray-400">
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                {new Date(prompt.createdAt).toLocaleDateString('zh-CN')}
-              </div>
+              <CopyButton text={prompt.content} onCopy={() => onCopy(prompt.id)} size="lg" />
             </div>
-            <CopyButton text={prompt.content} onCopy={() => onCopy(prompt.id)} size="lg" />
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
@@ -657,6 +756,46 @@ function MainApp({ user, onLogout }) {
     }
   };
 
+  const handleUpdate = async (id, form) => {
+    try {
+      const { data, error } = await supabase
+        .from("prompts")
+        .update({
+          title: form.title,
+          content: form.content,
+          category_id: form.categoryId,
+          model: form.model,
+        })
+        .eq("id", id)
+        .select(`
+          *,
+          categories(name, slug)
+        `)
+        .single();
+
+      if (error) throw error;
+
+      // 更新本地状态
+      const updatedPrompt = {
+        id: data.id,
+        title: data.title,
+        content: data.content,
+        categoryId: data.category_id,
+        categoryName: data.categories?.name,
+        categorySlug: data.categories?.slug,
+        model: data.model,
+        usageCount: data.usage_count,
+        createdAt: data.created_at
+      };
+
+      setPrompts(prev => prev.map(p => p.id === id ? updatedPrompt : p));
+      setDetailPrompt(prev => prev?.id === id ? updatedPrompt : prev);
+    } catch (error) {
+      console.error("更新失败:", error);
+      throw error;
+    }
+  };
+
   const handleDelete = async (id) => {
     if (!confirm("确定要删除这个 Prompt 吗？")) return;
 
@@ -839,6 +978,9 @@ function MainApp({ user, onLogout }) {
           prompt={detailPrompt}
           onClose={() => setDetailPrompt(null)}
           onCopy={(id) => { handleCopy(id); }}
+          onUpdate={handleUpdate}
+          categories={categories}
+          models={MODELS}
         />
       )}
     </div>
