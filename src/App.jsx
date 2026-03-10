@@ -558,11 +558,11 @@ function ImportModal({ onClose, onImport, categories }) {
   const [importing, setImporting] = useState(false);
 
   const downloadTemplate = () => {
-    const template = `标题,文案,分类
+    const template = `标题,提示词文案,分类
 写作助手,你是一个专业的写作助手，请帮我润色这段文字,写作
-代码审查,请审查以下代码，找出潜在的问题和改进建议,编程
+代码审查,请审查以下代码，找出潜在的问题和改进建议,开发
 翻译助手,请将以下文本翻译成英文，保持原意不变,写作
-数据分析,请分析以下数据并提供可视化建议,分析`;
+数据分析,请分析以下数据并提供可视化建议,数据`;
 
     const blob = new Blob(['\ufeff' + template], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
@@ -642,7 +642,7 @@ function ImportModal({ onClose, onImport, categories }) {
                 </svg>
               </div>
               <p className="text-sm font-medium text-gray-700 mb-1">点击上传 CSV 文件</p>
-              <p className="text-xs text-gray-400">支持格式：CSV（标题,文案,分类）</p>
+              <p className="text-xs text-gray-400">支持格式：CSV（标题,提示词文案,分类）</p>
             </label>
             {file && (
               <p className="text-xs text-blue-500 mt-2">已选择：{file.name}</p>
@@ -669,7 +669,7 @@ function ImportModal({ onClose, onImport, categories }) {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-3 py-2 text-left font-medium text-gray-500">标题</th>
-                      <th className="px-3 py-2 text-left font-medium text-gray-500">文案</th>
+                      <th className="px-3 py-2 text-left font-medium text-gray-500">提示词文案</th>
                       <th className="px-3 py-2 text-left font-medium text-gray-500">分类</th>
                     </tr>
                   </thead>
