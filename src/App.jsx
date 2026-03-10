@@ -66,8 +66,23 @@ function MainApp({ user, onLogout }) {
 
       if (error) throw error;
 
+      // 去重：根据 slug 去重，保留最新的记录
+      const uniqueCategories = [];
+      const seenSlugs = new Set();
+
+      if (data) {
+        // 从后往前遍历，保留最新的记录
+        for (let i = data.length - 1; i >= 0; i--) {
+          const cat = data[i];
+          if (!seenSlugs.has(cat.slug)) {
+            seenSlugs.add(cat.slug);
+            uniqueCategories.unshift(cat);
+          }
+        }
+      }
+
       // 如果没有分类，自动创建默认分类
-      if (!data || data.length === 0) {
+      if (!uniqueCategories || uniqueCategories.length === 0) {
         console.log("检测到用户没有分类，正在创建默认分类...");
         const newCategories = DEFAULT_CATEGORIES.map(cat => ({
           user_id: user.id,
@@ -88,46 +103,8 @@ function MainApp({ user, onLogout }) {
           setCategories(newData || []);
         }
       } else {
-        // 检查是否需要更新到新的分类系统
-        const oldSlugs = ['writing', 'coding', 'analysis', 'image', 'video'];
-        const hasOldCategories = data.some(cat => oldSlugs.includes(cat.slug));
-
-        if (hasOldCategories) {
-          console.log("检测到旧版分类，正在更新到新的分类系统...");
-
-          const { error: deleteError } = await supabase
-            .from("categories")
-            .delete()
-            .in('slug', oldSlugs)
-            .eq("user_id", user.id);
-
-          if (!deleteError) {
-            console.log("旧分类已删除");
-
-            const newCategories = DEFAULT_CATEGORIES.map(cat => ({
-              user_id: user.id,
-              name: cat.name,
-              slug: cat.slug
-            }));
-
-            const { data: newData, error: insertError } = await supabase
-              .from("categories")
-              .insert(newCategories)
-              .select();
-
-            if (!insertError) {
-              console.log("新分类创建成功:", newData);
-              setCategories(newData || []);
-            } else {
-              setCategories(data);
-            }
-          } else {
-            console.error("删除旧分类失败:", deleteError);
-            setCategories(data);
-          }
-        } else {
-          setCategories(data);
-        }
+        // 使用去重后的分类数据
+        setCategories(uniqueCategories);
       }
     } catch (error) {
       console.error("加载分类失败:", error);
