@@ -555,7 +555,12 @@ function AddPromptModal({ onClose, onAdd, categories, loading }) {
 function ImportModal({ onClose, onImport, categories }) {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState([]);
+  const [allData, setAllData] = useState([]);
   const [importing, setImporting] = useState(false);
+  const [error, setError] = useState('');
+
+  const MAX_ROWS = 500;
+  const MAX_FILE_SIZE = 4.5 * 1024 * 1024; // 4.5MB in bytes
 
   const downloadTemplate = () => {
     const template = `标题,提示词文案,分类
@@ -576,34 +581,115 @@ function ImportModal({ onClose, onImport, categories }) {
     const selectedFile = e.target.files[0];
     if (!selectedFile) return;
 
+    // 重置状态
+    setError('');
+    setPreview([]);
+    setAllData([]);
+
+    // 校验文件大小
+    if (selectedFile.size > MAX_FILE_SIZE) {
+      setError('导入文件不能超过 4.5MB');
+      setFile(selectedFile);
+      return;
+    }
+
     setFile(selectedFile);
 
     // Parse CSV
     const reader = new FileReader();
     reader.onload = (event) => {
       const text = event.target.result;
-      const lines = text.split('\n').filter(line => line.trim());
+
+      // Parse CSV with proper handling of quoted fields
+      const parseCSV = (text) => {
+        const lines = [];
+        let currentLine = [];
+        let currentField = '';
+        let inQuotes = false;
+
+        for (let i = 0; i < text.length; i++) {
+          const char = text[i];
+          const nextChar = text[i + 1];
+
+          if (char === '"') {
+            if (inQuotes && nextChar === '"') {
+              // Escaped quote
+              currentField += '"';
+              i++;
+            } else {
+              // Toggle quote mode
+              inQuotes = !inQuotes;
+            }
+          } else if (char === ',' && !inQuotes) {
+            // Field separator
+            currentLine.push(currentField);
+            currentField = '';
+          } else if (char === '\n' && !inQuotes) {
+            // Line separator
+            currentLine.push(currentField);
+            if (currentLine.some(field => field.trim())) {
+              lines.push(currentLine);
+            }
+            currentLine = [];
+            currentField = '';
+          } else if (char === '\r' && nextChar === '\n' && !inQuotes) {
+            // Windows line separator
+            currentLine.push(currentField);
+            if (currentLine.some(field => field.trim())) {
+              lines.push(currentLine);
+            }
+            currentLine = [];
+            currentField = '';
+            i++;
+          } else {
+            currentField += char;
+          }
+        }
+
+        // Last line
+        if (currentField || currentLine.length > 0) {
+          currentLine.push(currentField);
+          if (currentLine.some(field => field.trim())) {
+            lines.push(currentLine);
+          }
+        }
+
+        return lines;
+      };
+
+      const rows = parseCSV(text);
 
       // Skip header row, parse data
-      const data = lines.slice(1).map(line => {
-        const parts = line.split(',');
+      const data = rows.slice(1).map(row => {
+        // Trim whitespace and quotes from fields
+        const cleanField = (field) => field.trim().replace(/^"|"$/g, '');
+
         return {
-          title: parts[0]?.trim() || '',
-          content: parts[1]?.trim() || '',
-          categoryName: parts[2]?.trim() || ''
+          title: cleanField(row[0]) || '',
+          content: cleanField(row[1]) || '',
+          categoryName: cleanField(row[2]) || ''
         };
       }).filter(item => item.title && item.content);
 
+      // 校验数据条数
+      if (data.length > MAX_ROWS) {
+        setError(`每次导入数据不能超过 ${MAX_ROWS} 条，当前文件有 ${data.length} 条`);
+        setAllData([]);
+        setPreview([]);
+        return;
+      }
+
+      setAllData(data); // Save all data for import
       setPreview(data.slice(0, 10)); // Show first 10 for preview
     };
     reader.readAsText(selectedFile);
   };
 
   const handleImport = async () => {
-    if (!file || preview.length === 0) return;
+    if (!file || allData.length === 0) return;
     setImporting(true);
     try {
-      await onImport(preview);
+      await onImport(allData);
       onClose();
     } catch (error) {
       console.error("导入失败:", error);
@@ -641,8 +727,7 @@ function ImportModal({ onClose, onImport, categories }) {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
               </div>
-              <p className="text-sm font-medium text-gray-700 mb-1">点击上传 CSV 文件</p>
-              <p className="text-xs text-gray-400">支持格式：CSV（标题,提示词文案,分类）</p>
+              <p className="text-sm font-medium text-gray-700">点击上传 CSV 文件</p>
             </label>
             {file && (
               <p className="text-xs text-blue-500 mt-2">已选择：{file.name}</p>
@@ -660,10 +745,37 @@ function ImportModal({ onClose, onImport, categories }) {
             下载导入模板
           </button>
 
+          {/* Import Limits */}
+          <div className="bg-blue-50 rounded-xl p-3">
+            <div className="flex items-start gap-2">
+              <svg className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div className="text-xs text-blue-700">
+                <p className="font-medium mb-1">导入提醒</p>
+                <p>• 支持格式：CSV（标题,提示词文案,分类）</p>
+                <p>• 每次可同时导入 <span className="font-semibold">{MAX_ROWS}</span> 条数据</p>
+                <p>• 附件不能超过 <span className="font-semibold">4.5MB</span></p>
+              </div>
+            </div>
+          </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-3">
+              <div className="flex items-start gap-2">
+                <svg className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-xs text-red-600">{error}</p>
+              </div>
+            </div>
+          )}
+
           {/* Preview */}
           {preview.length > 0 && (
             <div>
-              <p className="text-xs font-medium text-gray-500 mb-2">预览（前 10 条）</p>
+              <p className="text-xs font-medium text-gray-500 mb-2">预览（前 10 条，共 {allData.length} 条）</p>
               <div className="border border-gray-200 rounded-xl overflow-hidden max-h-64 overflow-y-auto">
                 <table className="w-full text-xs">
                   <thead className="bg-gray-50">
@@ -699,7 +811,7 @@ function ImportModal({ onClose, onImport, categories }) {
             disabled={!file || preview.length === 0 || importing}
             className="flex-1 py-2.5 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {importing ? "导入中..." : `导入 ${preview.length} 条`}
+            {importing ? "导入中..." : `导入 ${allData.length} 条`}
           </button>
         </div>
       </div>
