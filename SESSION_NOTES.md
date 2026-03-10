@@ -18,6 +18,22 @@
 - 开发 → 本地测试 → 合并 PR → Vercel 自动部署
 - Git 别名已配置：`git feature`, `git finish`, `git push-feature`
 
+### ⚠️ 重要：分支提醒
+**在开发新功能前，必须先创建功能分支！**
+
+如果用户没有主动说创建分支，Claude 必须先询问：
+> "是否需要创建一个新的功能分支来开发这个功能？"
+
+**禁止直接在 main 分支进行功能开发！**
+
+正确流程：
+1. 用户提出新功能需求
+2. Claude 确认是否需要创建分支
+3. 执行 `git feature <功能名>` 创建分支
+4. 在功能分支上开发
+5. 本地测试通过
+6. 推送并合并到 main
+
 ## 环境变量
 ```env
 VITE_SUPABASE_URL=https://xtpqilnjmkiewkgtessk.supabase.co
