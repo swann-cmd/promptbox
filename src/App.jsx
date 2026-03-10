@@ -1,1008 +1,23 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "./lib/supabase";
 
-// ─── Constants ───────────────────────────────────────────────────────────────────
-
-const MODELS = ["通用", "ChatGPT", "Claude", "Gemini", "Midjourney", "Sora"];
-
-const MAX_TITLE_LENGTH = 200;
-const MAX_CONTENT_LENGTH = 10000;
-
-// 验证函数
-const validatePrompt = (title, content) => {
-  if (title.length > MAX_TITLE_LENGTH) {
-    throw new Error(`标题不能超过 ${MAX_TITLE_LENGTH} 字符（当前：${title.length} 字符）`);
-  }
-  if (content.length > MAX_CONTENT_LENGTH) {
-    throw new Error(`内容不能超过 ${MAX_CONTENT_LENGTH} 字符（当前：${content.length} 字符）`);
-  }
-};
-
-// 输入清理函数 - 防止 XSS 攻击
-const sanitizeInput = (input, maxLength = 10000) => {
-  if (typeof input !== 'string') return '';
-
-  // 移除危险字符（防止脚本注入）
-  let cleaned = input
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // 移除 script 标签
-    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '') // 移除 iframe 标签
-    .replace(/javascript:/gi, '') // 移除 javascript: 协议
-    .replace(/on\w+\s*=/gi, ''); // 移除事件处理器（如 onclick=）
-
-  // 限制长度
-  return cleaned.slice(0, maxLength).trim();
-};
-
-const DEFAULT_CATEGORIES = [
-  { name: "产品", slug: "product" },
-  { name: "写作", slug: "writing" },
-  { name: "数据", slug: "data" },
-  { name: "学习", slug: "learning" },
-  { name: "AI", slug: "ai" },
-  { name: "创业", slug: "startup" },
-  { name: "思维", slug: "thinking" },
-  { name: "个人效率", slug: "productivity" },
-  { name: "开发", slug: "development" },
-  { name: "视频", slug: "video" },
-];
-
-const categoryColors = {
-  product: { bg: "bg-blue-50", text: "text-blue-600", dot: "bg-blue-400", accent: "#3b82f6" },
-  writing: { bg: "bg-violet-50", text: "text-violet-600", dot: "bg-violet-400", accent: "#7c3aed" },
-  data: { bg: "bg-emerald-50", text: "text-emerald-600", dot: "bg-emerald-400", accent: "#059669" },
-  learning: { bg: "bg-amber-50", text: "text-amber-600", dot: "bg-amber-400", accent: "#d97706" },
-  ai: { bg: "bg-rose-50", text: "text-rose-600", dot: "bg-rose-400", accent: "#e11d48" },
-  startup: { bg: "bg-cyan-50", text: "text-cyan-600", dot: "bg-cyan-400", accent: "#0891b2" },
-  thinking: { bg: "bg-purple-50", text: "text-purple-600", dot: "bg-purple-400", accent: "#9333ea" },
-  productivity: { bg: "bg-green-50", text: "text-green-600", dot: "bg-green-400", accent: "#22c55e" },
-  development: { bg: "bg-indigo-50", text: "text-indigo-600", dot: "bg-indigo-400", accent: "#6366f1" },
-  video: { bg: "bg-orange-50", text: "text-orange-600", dot: "bg-orange-400", accent: "#f97316" },
-};
-
-const APP_FONT = { fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif" };
-
-// ─── Shared Components ───────────────────────────────────────────────────────
-
-function CategoryBadge({ categorySlug, categoryName }) {
-  const colors = categoryColors[categorySlug] || { bg: "bg-gray-50", text: "text-gray-500", dot: "bg-gray-300" };
-  return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${colors.bg} ${colors.text}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
-      {categoryName || categorySlug}
-    </span>
-  );
-}
-
-function CopyButton({ text, onCopy, size = "sm", disabled = false }) {
-  const [copied, setCopied] = useState(false);
-
-  const handle = async () => {
-    if (disabled) return;
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      if (onCopy) await onCopy();
-      setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      console.error("复制失败:", error);
-    }
-  };
-
-  const base = size === "lg"
-    ? "flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200"
-    : "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200";
-
-  return (
-    <button
-      onClick={handle}
-      disabled={disabled}
-      className={`${base} ${copied ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700"} ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
-    >
-      {copied ? (
-        <><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>已复制</>
-      ) : (
-        <><svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" /></svg>复制</>
-      )}
-    </button>
-  );
-}
-
-// ─── Auth Page ───────────────────────────────────────────────────────────────
-
-function AuthPage({ onLogin }) {
-  const [tab, setTab] = useState("login");
-  const [form, setForm] = useState({ email: "", password: "", confirmPassword: "", name: "" });
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [lastAttemptTime, setLastAttemptTime] = useState(0);
-
-  const RATE_LIMIT_MS = 2000; // 2 秒速率限制
-
-  const handleSubmit = async () => {
-    // 速率限制检查
-    const now = Date.now();
-    if (now - lastAttemptTime < RATE_LIMIT_MS) {
-      const waitTime = Math.ceil((RATE_LIMIT_MS - (now - lastAttemptTime)) / 1000);
-      setError(`请等待 ${waitTime} 秒后重试`);
-      return;
-    }
-
-    setError("");
-    if (!form.email || !form.password) { setError("请填写完整信息"); return; }
-
-    if (tab === "register") {
-      if (form.password !== form.confirmPassword) { setError("两次密码不一致"); return; }
-      if (form.password.length < 6) { setError("密码至少 6 位"); return; }
-    }
-
-    setLastAttemptTime(now);
-    setLoading(true);
-
-    try {
-      if (tab === "register") {
-        // 注册
-        const { data, error: signUpError } = await supabase.auth.signUp({
-          email: form.email,
-          password: form.password,
-          options: {
-            data: { name: form.name || form.email.split("@")[0] }
-          }
-        });
-
-        if (signUpError) throw signUpError;
-
-        // 注册成功后自动登录，创建默认分类
-        if (data.user) {
-          try {
-            await createDefaultCategories(data.user.id);
-          } catch (err) {
-            console.warn("创建分类时出错，但不影响登录:", err);
-          }
-          onLogin({ id: data.user.id, email: data.user.email, name: data.user.user_metadata?.name || form.email.split("@")[0] });
-        }
-      } else {
-        // 登录
-        const { data, error: signInError } = await supabase.auth.signInWithPassword({
-          email: form.email,
-          password: form.password,
-        });
-
-        if (signInError) throw signInError;
-
-        if (data.user) {
-          onLogin({
-            id: data.user.id,
-            email: data.user.email,
-            name: data.user.user_metadata?.name || form.email.split("@")[0]
-          });
-        }
-      }
-    } catch (err) {
-      setError(err.message || "操作失败，请重试");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const createDefaultCategories = async (userId) => {
-    try {
-      // 先检查是否已经有分类
-      const { data: existingCategories } = await supabase
-        .from("categories")
-        .select("slug")
-        .eq("user_id", userId);
-
-      if (existingCategories && existingCategories.length > 0) {
-        console.log("用户已有分类，跳过创建");
-        return;
-      }
-
-      const categories = DEFAULT_CATEGORIES.map(cat => ({
-        user_id: userId,
-        name: cat.name,
-        slug: cat.slug
-      }));
-
-      const { data, error } = await supabase.from("categories").insert(categories).select();
-
-      if (error) {
-        console.error("创建默认分类失败:", error);
-        throw error;
-      }
-      console.log("默认分类创建成功:", data);
-    } catch (error) {
-      console.error("创建默认分类失败:", error);
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4" style={APP_FONT}>
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-100 rounded-full opacity-40 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-violet-100 rounded-full opacity-30 blur-3xl" />
-      </div>
-
-      <div className="w-full max-w-sm relative">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-200">
-            <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.347.346A3.001 3.001 0 0012 15a3 3 0 00-2.99 2.757l-.347-.346z" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">PromptBox</h1>
-          <p className="text-sm text-gray-400 mt-1">你的 AI 提示词库</p>
-        </div>
-
-        {/* Card */}
-        <div className="bg-white rounded-3xl shadow-xl shadow-gray-100 border border-gray-100 p-6" style={{ minHeight: 420 }}>
-          {/* Tabs */}
-          <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
-            {[{ id: "login", label: "登录" }, { id: "register", label: "注册" }].map((t) => (
-              <button
-                key={t.id}
-                onClick={() => { setTab(t.id); setError(""); setForm({ email: "", password: "", confirmPassword: "", name: "" }); }}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${tab === t.id ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-
-          {/* All fields */}
-          <div className="space-y-3.5">
-            {/* 姓名 — register only */}
-            <div style={{ overflow: "hidden", maxHeight: tab === "register" ? 80 : 0, opacity: tab === "register" ? 1 : 0, transition: "max-height 0.25s ease, opacity 0.2s ease" }}>
-              <label className="text-xs font-medium text-gray-500 block mb-1.5">姓名</label>
-              <input
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
-                placeholder="你的名字"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                tabIndex={tab === "register" ? 0 : -1}
-              />
-            </div>
-
-            {/* 邮箱 */}
-            <div>
-              <label className="text-xs font-medium text-gray-500 block mb-1.5">邮箱</label>
-              <input
-                type="email"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
-                placeholder="your@email.com"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-              />
-            </div>
-
-            {/* 密码 */}
-            <div>
-              <label className="text-xs font-medium text-gray-500 block mb-1.5">密码</label>
-              <input
-                type="password"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
-                placeholder="••••••••"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-              />
-            </div>
-
-            {/* 确认密码 — register only */}
-            <div style={{ overflow: "hidden", maxHeight: tab === "register" ? 80 : 0, opacity: tab === "register" ? 1 : 0, transition: "max-height 0.25s ease, opacity 0.2s ease" }}>
-              <label className="text-xs font-medium text-gray-500 block mb-1.5">确认密码</label>
-              <input
-                type="password"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
-                placeholder="••••••••"
-                value={form.confirmPassword}
-                onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
-                tabIndex={tab === "register" ? 0 : -1}
-              />
-            </div>
-          </div>
-
-          {/* Error */}
-          <div style={{ overflow: "hidden", maxHeight: error ? 60 : 0, opacity: error ? 1 : 0, transition: "max-height 0.2s ease, opacity 0.15s ease" }}>
-            <div className="mt-3.5 px-3.5 py-2.5 bg-red-50 rounded-xl flex items-center gap-2">
-              <svg className="w-4 h-4 text-red-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <circle cx="12" cy="12" r="10" /><path d="M12 8v4m0 4h.01" strokeLinecap="round" />
-              </svg>
-              <p className="text-xs text-red-500">{error}</p>
-            </div>
-          </div>
-
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="w-full mt-5 py-3 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? "处理中..." : (tab === "login" ? "登录" : "创建账号")}
-          </button>
-
-          {/* 忘记密码 — login only */}
-          <div style={{ overflow: "hidden", maxHeight: tab === "login" ? 40 : 0, opacity: tab === "login" ? 1 : 0, transition: "max-height 0.2s ease, opacity 0.15s ease" }}>
-            <button className="w-full mt-3 text-xs text-blue-500 hover:text-blue-600 text-center">
-              忘记密码？
-            </button>
-          </div>
-        </div>
-
-        <p className="text-center text-xs text-gray-400 mt-6">
-          继续即表示同意 <span className="text-blue-500 cursor-pointer">服务条款</span> 和 <span className="text-blue-500 cursor-pointer">隐私政策</span>
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// ─── Detail Modal ─────────────────────────────────────────────────────────────
-
-function DetailModal({ prompt, onClose, onCopy, onUpdate, categories, models, onError }) {
-  if (!prompt) return null;
-  const colors = categoryColors[prompt.categorySlug] || {};
-  const [isEditing, setIsEditing] = useState(false);
-  const [form, setForm] = useState({ title: prompt.title, content: prompt.content, categoryId: prompt.categoryId, model: prompt.model });
-  const [saving, setSaving] = useState(false);
-
-  const handleSave = async () => {
-    if (!form.title.trim() || !form.content.trim()) return;
-    setSaving(true);
-    try {
-      await onUpdate(prompt.id, form);
-      setIsEditing(false);
-    } catch (error) {
-      console.error("更新失败:", error);
-      if (onError) onError("更新失败", error.message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleCancel = () => {
-    setForm({ title: prompt.title, content: prompt.content, categoryId: prompt.categoryId, model: prompt.model });
-    setIsEditing(false);
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div
-        className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-        style={{ maxHeight: "85vh" }}
-      >
-        {/* Header */}
-        <div className="px-6 pt-6 pb-4 border-b border-gray-50">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              {isEditing ? (
-                <input
-                  className="w-full text-lg font-semibold text-gray-900 leading-snug mb-2.5 border-b-2 border-blue-500 focus:outline-none pb-1"
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  placeholder="提示词标题"
-                />
-              ) : (
-                <h2 className="text-lg font-semibold text-gray-900 leading-snug mb-2.5">{prompt.title}</h2>
-              )}
-              <div className="flex flex-wrap items-center gap-2">
-                {isEditing ? (
-                  <>
-                    <select
-                      className="text-xs border border-gray-200 rounded-lg px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 bg-white"
-                      value={form.categoryId}
-                      onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
-                    >
-                      {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
-                    <select
-                      className="text-xs border border-gray-200 rounded-lg px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 bg-white"
-                      value={form.model}
-                      onChange={(e) => setForm({ ...form, model: e.target.value })}
-                    >
-                      {models.map((m) => <option key={m} value={m}>{m}</option>)}
-                    </select>
-                  </>
-                ) : (
-                  <>
-                    <CategoryBadge categorySlug={prompt.categorySlug} categoryName={prompt.categoryName} />
-                    <span className="text-xs text-gray-400 bg-gray-50 px-2.5 py-1 rounded-full font-medium">{prompt.model}</span>
-                  </>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {isEditing ? (
-                <>
-                  <button
-                    onClick={handleCancel}
-                    disabled={saving}
-                    className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors disabled:opacity-50"
-                    title="取消"
-                  >
-                    <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={handleSave}
-                    disabled={saving || !form.title.trim() || !form.content.trim()}
-                    className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {saving ? "保存中..." : "保存"}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-blue-50 hover:bg-blue-100 transition-colors"
-                    title="编辑"
-                  >
-                    <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={onClose}
-                    className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-                  >
-                    <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="px-6 py-5 overflow-y-auto" style={{ maxHeight: "calc(85vh - 200px)" }}>
-          {isEditing ? (
-            <textarea
-              className="w-full bg-gray-50 rounded-2xl p-4 text-sm text-gray-700 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 border-2 border-transparent focus:border-blue-400 transition-all"
-              rows={12}
-              value={form.content}
-              onChange={(e) => setForm({ ...form, content: e.target.value })}
-              placeholder="输入提示词内容..."
-            />
-          ) : (
-            <div className="bg-gray-50 rounded-2xl p-4">
-              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{prompt.content}</p>
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        {!isEditing && (
-          <div className="px-6 pb-6 pt-3 border-t border-gray-50">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1.5 text-xs text-gray-400">
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                  使用 <span className="font-semibold text-gray-600">{prompt.usageCount}</span> 次
-                </div>
-                <div className="flex items-center gap-1.5 text-xs text-gray-400">
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  {new Date(prompt.createdAt).toLocaleDateString('zh-CN')}
-                </div>
-              </div>
-              <CopyButton text={prompt.content} onCopy={() => onCopy(prompt.id)} size="lg" />
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Add Prompt Modal ─────────────────────────────────────────────────────────
-
-function AddPromptModal({ onClose, onAdd, categories, loading }) {
-  const [form, setForm] = useState({ title: "", content: "", categoryId: "", model: "通用" });
-  const [submitting, setSubmitting] = useState(false);
-
-  const handleSubmit = async () => {
-    if (!form.title.trim() || !form.content.trim()) return;
-    setSubmitting(true);
-    try {
-      await onAdd(form);
-      onClose();
-    } catch (error) {
-      console.error("添加失败:", error);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-6">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-base font-semibold text-gray-900">添加 Prompt</h2>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
-            <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        <div className="space-y-4">
-          <div>
-            <label className="text-xs font-medium text-gray-500 block mb-1.5">标题</label>
-            <input
-              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
-              placeholder="给这个 Prompt 起个名字"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-            />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-gray-500 block mb-1.5">内容</label>
-            <textarea
-              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all resize-none"
-              placeholder="输入提示词内容..."
-              rows={5}
-              value={form.content}
-              onChange={(e) => setForm({ ...form, content: e.target.value })}
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-medium text-gray-500 block mb-1.5">场景分类</label>
-              <select
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all bg-white"
-                value={form.categoryId}
-                onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
-              >
-                <option value="">选择分类</option>
-                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-gray-500 block mb-1.5">适用模型</label>
-              <select
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all bg-white"
-                value={form.model}
-                onChange={(e) => setForm({ ...form, model: e.target.value })}
-              >
-                {MODELS.map((m) => <option key={m} value={m}>{m}</option>)}
-              </select>
-            </div>
-          </div>
-        </div>
-        <div className="flex gap-3 mt-5">
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">取消</button>
-          <button
-            onClick={handleSubmit}
-            disabled={!form.title.trim() || !form.content.trim() || !form.categoryId || submitting}
-            className="flex-1 py-2.5 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {submitting ? "添加中..." : "添加"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Custom Dialog Components ─────────────────────────────────────────────────
-
-function AlertDialog({ isOpen, title, message, onConfirm, confirmText = "确定" }) {
-  if (!isOpen) return null;
-  return (
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
-        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg className="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-        </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center">{title}</h3>
-        <p className="text-sm text-gray-600 mb-6 text-center">{message}</p>
-        <button onClick={onConfirm} className="w-full py-2.5 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 transition-colors">
-          {confirmText}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function ConfirmDialog({ isOpen, title, message, onConfirm, onCancel, confirmText = "确认删除", type = "danger" }) {
-  if (!isOpen) return null;
-  const isDanger = type === "danger";
-  return (
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
-        <div className={`w-12 h-12 ${isDanger ? 'bg-red-100' : 'bg-blue-100'} rounded-full flex items-center justify-center mx-auto mb-4`}>
-          {isDanger ? (
-            <svg className="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          ) : (
-            <svg className="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          )}
-        </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center">{title}</h3>
-        <p className="text-sm text-gray-600 mb-6 text-center">{message}</p>
-        <div className="flex gap-3">
-          <button onClick={onCancel} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
-            取消
-          </button>
-          <button onClick={onConfirm} className={`flex-1 py-2.5 rounded-xl text-white text-sm font-semibold transition-colors ${isDanger ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'}`}>
-            {confirmText}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Import Modal ─────────────────────────────────────────────────────────────
-
-function ImportModal({ onClose, onImport, categories, onError }) {
-  const [file, setFile] = useState(null);
-  const [preview, setPreview] = useState([]);
-  const [allData, setAllData] = useState([]);
-  const [importing, setImporting] = useState(false);
-  const [error, setError] = useState('');
-
-  const MAX_ROWS = 500;
-  const MAX_FILE_SIZE = 4.5 * 1024 * 1024; // 4.5MB in bytes
-
-  const downloadTemplate = () => {
-    const template = `标题,提示词文案,分类
-写作助手,你是一个专业的写作助手，请帮我润色这段文字,写作
-代码审查,请审查以下代码，找出潜在的问题和改进建议,开发
-翻译助手,请将以下文本翻译成英文，保持原意不变,写作
-数据分析,请分析以下数据并提供可视化建议,数据`;
-
-    const blob = new Blob(['\ufeff' + template], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'prompts_template.csv';
-    link.click();
-    URL.revokeObjectURL(link.href);
-  };
-
-  const handleFileSelect = (e) => {
-    const selectedFile = e.target.files[0];
-    if (!selectedFile) return;
-
-    // 重置状态
-    setError('');
-    setPreview([]);
-    setAllData([]);
-
-    // 校验文件大小
-    if (selectedFile.size > MAX_FILE_SIZE) {
-      setError('导入文件不能超过 4.5MB');
-      setFile(selectedFile);
-      return;
-    }
-
-    setFile(selectedFile);
-
-    // Parse CSV
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const text = event.target.result;
-
-        // 检查空文件
-        if (!text || text.trim().length === 0) {
-          setError('CSV 文件为空');
-          return;
-        }
-
-        // Parse CSV with proper handling of quoted fields
-        const parseCSV = (text) => {
-          const lines = [];
-          let currentLine = [];
-          let currentField = '';
-          let inQuotes = false;
-          let quoteCount = 0;
-
-          for (let i = 0; i < text.length; i++) {
-            const char = text[i];
-            const nextChar = text[i + 1];
-
-            if (char === '"') {
-              quoteCount++;
-              if (inQuotes && nextChar === '"') {
-                // Escaped quote
-                currentField += '"';
-                i++;
-              } else {
-                // Toggle quote mode
-                inQuotes = !inQuotes;
-              }
-            } else if (char === ',' && !inQuotes) {
-              // Field separator
-              currentLine.push(currentField);
-              currentField = '';
-            } else if (char === '\n' && !inQuotes) {
-              // Line separator
-              currentLine.push(currentField);
-              if (currentLine.some(field => field.trim())) {
-                lines.push(currentLine);
-              }
-              currentLine = [];
-              currentField = '';
-            } else if (char === '\r' && nextChar === '\n' && !inQuotes) {
-              // Windows line separator
-              currentLine.push(currentField);
-              if (currentLine.some(field => field.trim())) {
-                lines.push(currentLine);
-              }
-              currentLine = [];
-              currentField = '';
-              i++;
-            } else if (char !== '\r') {
-              // 忽略单独的 \r 字符
-              currentField += char;
-            }
-          }
-
-          // 检查未闭合的引号
-          if (inQuotes) {
-            throw new Error('CSV 格式错误：引号未闭合');
-          }
-
-          // Last line
-          if (currentField || currentLine.length > 0) {
-            currentLine.push(currentField);
-            if (currentLine.some(field => field.trim())) {
-              lines.push(currentLine);
-            }
-          }
-
-          // 检查是否只有标题行
-          if (lines.length <= 1) {
-            throw new Error('CSV 文件没有数据行（只有标题行）');
-          }
-
-          return lines;
-        };
-
-        const rows = parseCSV(text);
-
-      // Skip header row, parse data
-      const data = rows.slice(1).map(row => {
-        // Trim whitespace and quotes from fields, prevent CSV injection
-        const cleanField = (field) => {
-          const cleaned = field.trim().replace(/^"|"$/g, '');
-          // 防止 CSV 注入 - 检查是否以危险字符开头 (=, +, -, @)
-          if (/^[=+\-@]/.test(cleaned)) {
-            return "'" + cleaned; // 前缀单引号阻止公式执行
-          }
-          return cleaned;
-        };
-
-        return {
-          title: cleanField(row[0]) || '',
-          content: cleanField(row[1]) || '',
-          categoryName: cleanField(row[2]) || ''
-        };
-      }).filter(item => item.title && item.content);
-
-      // 校验数据条数
-      if (data.length > MAX_ROWS) {
-        setError(`每次导入数据不能超过 ${MAX_ROWS} 条，当前文件有 ${data.length} 条`);
-        setAllData([]);
-        setPreview([]);
-        return;
-      }
-
-      setAllData(data); // Save all data for import
-      setPreview(data.slice(0, 10)); // Show first 10 for preview
-      } catch (parseError) {
-        console.error("CSV 解析失败:", parseError);
-        setError('CSV 文件格式错误：' + parseError.message);
-        setAllData([]);
-        setPreview([]);
-      }
-    };
-    reader.readAsText(selectedFile);
-  };
-
-  const handleImport = async () => {
-    if (!file || allData.length === 0) return;
-    setImporting(true);
-    try {
-      await onImport(allData);
-      onClose();
-    } catch (error) {
-      console.error("导入失败:", error);
-      if (onError) onError("导入失败", error.message);
-    } finally {
-      setImporting(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl p-6">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-base font-semibold text-gray-900">导入 Prompts</h2>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
-            <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="space-y-4">
-          {/* File Upload */}
-          <div className="border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center hover:border-blue-300 transition-colors">
-            <input
-              type="file"
-              accept=".csv"
-              onChange={handleFileSelect}
-              className="hidden"
-              id="csv-upload"
-            />
-            <label htmlFor="csv-upload" className="cursor-pointer">
-              <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                <svg className="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-              </div>
-              <p className="text-sm font-medium text-gray-700">点击上传 CSV 文件</p>
-            </label>
-            {file && (
-              <p className="text-xs text-blue-500 mt-2">已选择：{file.name}</p>
-            )}
-          </div>
-
-          {/* Download Template */}
-          <button
-            onClick={downloadTemplate}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-50 hover:bg-gray-100 text-gray-700 text-sm font-medium rounded-xl transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            下载导入模板
-          </button>
-
-          {/* Import Limits */}
-          <div className="bg-blue-50 rounded-xl p-3">
-            <div className="flex items-start gap-2">
-              <svg className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <div className="text-xs text-blue-700">
-                <p className="font-medium mb-1">导入提醒</p>
-                <p>• 支持格式：CSV（标题,提示词文案,分类）</p>
-                <p>• 每次可同时导入 <span className="font-semibold">{MAX_ROWS}</span> 条数据</p>
-                <p>• 附件不能超过 <span className="font-semibold">4.5MB</span></p>
-              </div>
-            </div>
-          </div>
-
-          {/* Error Message */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-3">
-              <div className="flex items-start gap-2">
-                <svg className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <p className="text-xs text-red-600">{error}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Preview */}
-          {preview.length > 0 && (
-            <div>
-              <p className="text-xs font-medium text-gray-500 mb-2">预览（前 10 条，共 {allData.length} 条）</p>
-              <div className="border border-gray-200 rounded-xl overflow-hidden max-h-64 overflow-y-auto">
-                <table className="w-full text-xs">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-3 py-2 text-left font-medium text-gray-500">标题</th>
-                      <th className="px-3 py-2 text-left font-medium text-gray-500">提示词文案</th>
-                      <th className="px-3 py-2 text-left font-medium text-gray-500">分类</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {preview.map((item, idx) => (
-                      <tr key={idx} className="hover:bg-gray-50">
-                        <td className="px-3 py-2 text-gray-900 max-w-xs truncate">{item.title}</td>
-                        <td className="px-3 py-2 text-gray-500 max-w-xs truncate">{item.content}</td>
-                        <td className="px-3 py-2">
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-blue-50 text-blue-600">
-                            {item.categoryName || '未分类'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="flex gap-3 mt-5">
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">取消</button>
-          <button
-            onClick={handleImport}
-            disabled={!file || preview.length === 0 || importing}
-            className="flex-1 py-2.5 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {importing ? "导入中..." : `导入 ${allData.length} 条`}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Prompt Card ──────────────────────────────────────────────────────────────
-
-function PromptCard({ prompt, onCopy, onClick, onDelete }) {
-  return (
-    <div
-      className="group bg-white rounded-2xl border border-gray-100 p-5 hover:border-gray-200 hover:shadow-md transition-all duration-300 cursor-pointer relative"
-      onClick={() => onClick(prompt)}
-    >
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-2">{prompt.title}</h3>
-          <div className="flex flex-wrap items-center gap-2">
-            <CategoryBadge categorySlug={prompt.categorySlug} categoryName={prompt.categoryName} />
-            <span className="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">{prompt.model}</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-          <CopyButton text={prompt.content} onCopy={() => onCopy(prompt.id)} />
-          <button
-            onClick={() => onDelete(prompt.id)}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-            title="删除"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <p className="text-sm text-gray-400 leading-relaxed line-clamp-2">{prompt.content}</p>
-
-      <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-50">
-        <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1 text-xs text-gray-400">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-            {prompt.usageCount} 次
-          </span>
-          <span className="flex items-center gap-1 text-xs text-gray-400">
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            {new Date(prompt.createdAt).toLocaleDateString('zh-CN')}
-          </span>
-        </div>
-        <span className="text-xs text-gray-300 group-hover:text-blue-400 transition-colors flex items-center gap-1">
-          查看详情
-          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </span>
-      </div>
-    </div>
-  );
-}
+// Components
+import AuthPage from "./components/auth/AuthPage";
+import PromptCard from "./components/prompts/PromptCard";
+import DetailModal from "./components/prompts/DetailModal";
+import AddPromptModal from "./components/prompts/AddPromptModal";
+import ImportModal from "./components/prompts/ImportModal";
+import AlertDialog from "./components/ui/dialogs/AlertDialog";
+import ConfirmDialog from "./components/ui/dialogs/ConfirmDialog";
+
+// Constants & Utilities
+import { DEFAULT_CATEGORIES, CATEGORY_COLORS } from "./constants/categories";
+import { MODELS, APP_FONT } from "./constants/app";
+import { validatePrompt } from "./utils/validation";
+import { sanitizeInput } from "./utils/sanitize";
+
+// Icons
+import { LogoIcon, CloseIcon, PlusIcon, UploadIcon, SearchIcon, LoadingSpinner, EmptyStateIcon } from "./components/ui/icons";
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
 
@@ -1025,15 +40,15 @@ function MainApp({ user, onLogout }) {
     fetchCategories();
   }, [user]);
 
-  // 加载 prompts（只在用户变化时重新获取）
+  // 加载 prompts
   useEffect(() => {
     if (user) fetchPrompts();
   }, [user]);
 
   // 监听认证状态变化
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT') {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
         onLogout();
       }
     });
@@ -1054,7 +69,7 @@ function MainApp({ user, onLogout }) {
       // 如果没有分类，自动创建默认分类
       if (!data || data.length === 0) {
         console.log("检测到用户没有分类，正在创建默认分类...");
-        const categories = DEFAULT_CATEGORIES.map(cat => ({
+        const newCategories = DEFAULT_CATEGORIES.map(cat => ({
           user_id: user.id,
           name: cat.name,
           slug: cat.slug
@@ -1062,7 +77,7 @@ function MainApp({ user, onLogout }) {
 
         const { data: newData, error: insertError } = await supabase
           .from("categories")
-          .insert(categories)
+          .insert(newCategories)
           .select();
 
         if (insertError) {
@@ -1080,19 +95,15 @@ function MainApp({ user, onLogout }) {
         if (hasOldCategories) {
           console.log("检测到旧版分类，正在更新到新的分类系统...");
 
-          // 删除旧的5个分类
           const { error: deleteError } = await supabase
             .from("categories")
             .delete()
             .in('slug', oldSlugs)
             .eq("user_id", user.id);
 
-          if (deleteError) {
-            console.error("删除旧分类失败:", deleteError);
-          } else {
+          if (!deleteError) {
             console.log("旧分类已删除");
 
-            // 创建新的8个分类
             const newCategories = DEFAULT_CATEGORIES.map(cat => ({
               user_id: user.id,
               name: cat.name,
@@ -1104,13 +115,15 @@ function MainApp({ user, onLogout }) {
               .insert(newCategories)
               .select();
 
-            if (insertError) {
-              console.error("创建新分类失败:", insertError);
-              setCategories(data);
-            } else {
+            if (!insertError) {
               console.log("新分类创建成功:", newData);
               setCategories(newData || []);
+            } else {
+              setCategories(data);
             }
+          } else {
+            console.error("删除旧分类失败:", deleteError);
+            setCategories(data);
           }
         } else {
           setCategories(data);
@@ -1128,7 +141,6 @@ function MainApp({ user, onLogout }) {
     setError(null);
 
     try {
-      // 总是获取所有 prompts，不过滤分类
       const { data, error } = await supabase
         .from("prompts")
         .select("*, categories(name, slug)")
@@ -1137,7 +149,6 @@ function MainApp({ user, onLogout }) {
 
       if (error) throw error;
 
-      // 转换数据格式
       const formattedData = (data || []).map(p => ({
         id: p.id,
         title: p.title,
@@ -1161,17 +172,14 @@ function MainApp({ user, onLogout }) {
 
   const handleCopy = async (id) => {
     try {
-      // 调用函数增加使用计数
       const { error } = await supabase.rpc("increment_usage_count", { prompt_id: id });
 
       if (error) throw error;
 
-      // 更新本地状态
       setPrompts(prev => prev.map(p =>
         p.id === id ? { ...p, usageCount: p.usageCount + 1 } : p
       ));
 
-      // 更新详情模态框中的状态
       if (detailPrompt?.id === id) {
         setDetailPrompt(prev => prev ? { ...prev, usageCount: prev.usageCount + 1 } : null);
       }
@@ -1182,14 +190,12 @@ function MainApp({ user, onLogout }) {
 
   const handleAdd = async (form) => {
     try {
-      // 验证内容长度
       validatePrompt(form.title, form.content);
 
-      // 清理用户输入
-      const sanitizedTitle = sanitizeInput(form.title, MAX_TITLE_LENGTH);
-      const sanitizedContent = sanitizeInput(form.content, MAX_CONTENT_LENGTH);
+      const sanitizedTitle = sanitizeInput(form.title, 200);
+      const sanitizedContent = sanitizeInput(form.content, 10000);
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("prompts")
         .insert({
           user_id: user.id,
@@ -1204,7 +210,6 @@ function MainApp({ user, onLogout }) {
 
       if (error) throw error;
 
-      // 刷新列表
       await fetchPrompts();
     } catch (error) {
       console.error("添加失败:", error);
@@ -1214,12 +219,10 @@ function MainApp({ user, onLogout }) {
 
   const handleUpdate = async (id, form) => {
     try {
-      // 验证内容长度
       validatePrompt(form.title, form.content);
 
-      // 清理用户输入
-      const sanitizedTitle = sanitizeInput(form.title, MAX_TITLE_LENGTH);
-      const sanitizedContent = sanitizeInput(form.content, MAX_CONTENT_LENGTH);
+      const sanitizedTitle = sanitizeInput(form.title, 200);
+      const sanitizedContent = sanitizeInput(form.content, 10000);
 
       const { data, error } = await supabase
         .from("prompts")
@@ -1238,7 +241,6 @@ function MainApp({ user, onLogout }) {
 
       if (error) throw error;
 
-      // 更新本地状态
       const updatedPrompt = {
         id: data.id,
         title: data.title,
@@ -1260,7 +262,6 @@ function MainApp({ user, onLogout }) {
   };
 
   const handleDelete = async (id) => {
-    // 显示自定义确认对话框
     setConfirmDialog({
       isOpen: true,
       title: "删除 Prompt",
@@ -1287,39 +288,32 @@ function MainApp({ user, onLogout }) {
 
   const handleImport = async (data) => {
     try {
-      // 验证所有数据项的长度
       data.forEach(item => {
         validatePrompt(item.title, item.content);
       });
 
-      // 将分类名称映射到分类 ID
       const categoryMap = {};
       categories.forEach(cat => {
         categoryMap[cat.name] = cat.id;
       });
 
-      // 准备批量插入数据（包含输入清理）
       const promptsToInsert = data.map(item => ({
         user_id: user.id,
-        title: sanitizeInput(item.title, MAX_TITLE_LENGTH),
-        content: sanitizeInput(item.content, MAX_CONTENT_LENGTH),
+        title: sanitizeInput(item.title, 200),
+        content: sanitizeInput(item.content, 10000),
         category_id: categoryMap[item.categoryName] || null,
         model: "通用",
         usage_count: 0
       }));
 
-      // 批量插入
-      const { data: insertedData, error } = await supabase
+      const { error } = await supabase
         .from("prompts")
         .insert(promptsToInsert)
         .select();
 
       if (error) throw error;
 
-      // 刷新列表
       await fetchPrompts();
-
-      return insertedData;
     } catch (error) {
       console.error("导入失败:", error);
       throw error;
@@ -1331,12 +325,10 @@ function MainApp({ user, onLogout }) {
     onLogout();
   };
 
-  // 过滤逻辑 - 使用 useMemo 优化性能
+  // 过滤逻辑
   const filtered = useMemo(() => {
     return prompts.filter((p) => {
-      // 分类过滤
       const matchCat = activeCategory === "all" || p.categorySlug === activeCategory;
-      // 搜索过滤
       const matchSearch = !searchQuery ||
         p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.content.toLowerCase().includes(searchQuery.toLowerCase());
@@ -1344,8 +336,7 @@ function MainApp({ user, onLogout }) {
     });
   }, [prompts, activeCategory, searchQuery]);
 
-  // 构建分类列表（包含"全部"）
-  // 使用 categorySlug 统计，因为这个字段更可靠
+  // 分类统计
   const categoryCounts = prompts.reduce((acc, p) => {
     if (p.categorySlug) {
       acc[p.categorySlug] = (acc[p.categorySlug] || 0) + 1;
@@ -1370,9 +361,7 @@ function MainApp({ user, onLogout }) {
         <div className="max-w-5xl mx-auto px-6 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-blue-500 rounded-xl flex items-center justify-center shadow-sm shadow-blue-200">
-              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.347.346A3.001 3.001 0 0012 15a3 3 0 00-2.99 2.757l-.347-.346z" />
-              </svg>
+              <LogoIcon />
             </div>
             <div>
               <span className="text-sm font-semibold text-gray-900">PromptBox</span>
@@ -1384,26 +373,29 @@ function MainApp({ user, onLogout }) {
               onClick={() => setShowAddModal(true)}
               className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold rounded-xl transition-colors shadow-sm shadow-blue-200"
             >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
+              <PlusIcon />
               新增
             </button>
             <button
               onClick={() => setShowImportModal(true)}
               className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-xl border border-gray-200 transition-colors"
             >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-              </svg>
+              <UploadIcon />
               导入
             </button>
             <div className="flex items-center gap-2 pl-3 border-l border-gray-100">
               <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center">
-                <span className="text-xs font-semibold text-blue-600">{user.name?.[0]?.toUpperCase() || "U"}</span>
+                <span className="text-xs font-semibold text-blue-600">
+                  {user.name?.[0]?.toUpperCase() || "U"}
+                </span>
               </div>
-              <span className="text-xs text-gray-600 font-medium hidden sm:block">{user.name || user.email}</span>
-              <button onClick={handleLogout} className="text-xs text-gray-400 hover:text-gray-600 transition-colors ml-1">
+              <span className="text-xs text-gray-600 font-medium hidden sm:block">
+                {user.name || user.email}
+              </span>
+              <button
+                onClick={handleLogout}
+                className="text-xs text-gray-400 hover:text-gray-600 transition-colors ml-1"
+              >
                 退出
               </button>
             </div>
@@ -1414,9 +406,9 @@ function MainApp({ user, onLogout }) {
       <div className="max-w-5xl mx-auto px-6 py-7">
         {/* Search */}
         <div className="relative mb-5">
-          <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" strokeLinecap="round" />
-          </svg>
+          <div className="absolute left-4 top-1/2 -translate-y-1/2">
+            <SearchIcon />
+          </div>
           <input
             className="w-full pl-11 pr-4 py-3 rounded-2xl bg-white border border-gray-100 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300 transition-all shadow-sm"
             placeholder="搜索提示词标题或内容..."
@@ -1424,10 +416,11 @@ function MainApp({ user, onLogout }) {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           {searchQuery && (
-            <button onClick={() => setSearchQuery("")} className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 transition-colors">
-              <svg className="w-3 h-3 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 transition-colors"
+            >
+              <CloseIcon />
             </button>
           )}
         </div>
@@ -1445,7 +438,11 @@ function MainApp({ user, onLogout }) {
               }`}
             >
               {cat.name}
-              <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${(activeCategory === "all" && cat.slug === "all") || activeCategory === cat.slug ? "bg-blue-400/50 text-white" : "bg-gray-100 text-gray-400"}`}>
+              <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
+                (activeCategory === "all" && cat.slug === "all") || activeCategory === cat.slug
+                  ? "bg-blue-400/50 text-white"
+                  : "bg-gray-100 text-gray-400"
+              }`}>
                 {cat.count}
               </span>
             </button>
@@ -1454,49 +451,51 @@ function MainApp({ user, onLogout }) {
 
         {/* Stats */}
         <div className="flex items-center justify-between mb-4">
-          <p className="text-xs text-gray-400">共 <span className="font-semibold text-gray-600">{filtered.length}</span> 条提示词</p>
-          <p className="text-xs text-gray-400">累计使用 <span className="font-semibold text-gray-600">{totalCount}</span> 次</p>
+          <p className="text-xs text-gray-400">
+            共 <span className="font-semibold text-gray-600">{filtered.length}</span> 条提示词
+          </p>
+          <p className="text-xs text-gray-400">
+            累计使用 <span className="font-semibold text-gray-600">{totalCount}</span> 次
+          </p>
         </div>
 
         {/* Loading */}
         {loading ? (
           <div className="text-center py-24">
             <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-              <svg className="w-6 h-6 text-blue-500 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
+              <LoadingSpinner />
             </div>
             <p className="text-sm text-gray-400">加载中...</p>
           </div>
+        ) : filtered.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filtered.map((p) => (
+              <PromptCard
+                key={p.id}
+                prompt={p}
+                onCopy={handleCopy}
+                onClick={setDetailPrompt}
+                onDelete={handleDelete}
+              />
+            ))}
+          </div>
         ) : (
-          /* Grid */
-          filtered.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filtered.map((p) => (
-                <PromptCard
-                  key={p.id}
-                  prompt={p}
-                  onCopy={handleCopy}
-                  onClick={setDetailPrompt}
-                  onDelete={handleDelete}
-                />
-              ))}
+          <div className="text-center py-24">
+            <div className="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+              <EmptyStateIcon />
             </div>
-          ) : (
-            <div className="text-center py-24">
-              <div className="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                <svg className="w-6 h-6 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <p className="text-sm text-gray-400">没有找到相关提示词</p>
-              <button onClick={() => { setSearchQuery(""); setActiveCategory("all"); }} className="mt-2 text-xs text-blue-500 hover:text-blue-600">清除筛选</button>
-            </div>
-          )
+            <p className="text-sm text-gray-400">没有找到相关提示词</p>
+            <button
+              onClick={() => { setSearchQuery(""); setActiveCategory("all"); }}
+              className="mt-2 text-xs text-blue-500 hover:text-blue-600"
+            >
+              清除筛选
+            </button>
+          </div>
         )}
       </div>
 
+      {/* Modals */}
       {showAddModal && (
         <AddPromptModal
           onClose={() => setShowAddModal(false)}
@@ -1514,6 +513,7 @@ function MainApp({ user, onLogout }) {
       )}
       {detailPrompt && (
         <DetailModal
+          key={detailPrompt.id}
           prompt={detailPrompt}
           onClose={() => setDetailPrompt(null)}
           onCopy={(id) => { handleCopy(id); }}
@@ -1524,7 +524,7 @@ function MainApp({ user, onLogout }) {
         />
       )}
 
-      {/* Custom Dialogs */}
+      {/* Dialogs */}
       <AlertDialog
         isOpen={alertDialog.isOpen}
         title={alertDialog.title}
