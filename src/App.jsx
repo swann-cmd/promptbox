@@ -1,9 +1,37 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "./lib/supabase";
 
 // ─── Constants ───────────────────────────────────────────────────────────────────
 
 const MODELS = ["通用", "ChatGPT", "Claude", "Gemini", "Midjourney", "Sora"];
+
+const MAX_TITLE_LENGTH = 200;
+const MAX_CONTENT_LENGTH = 10000;
+
+// 验证函数
+const validatePrompt = (title, content) => {
+  if (title.length > MAX_TITLE_LENGTH) {
+    throw new Error(`标题不能超过 ${MAX_TITLE_LENGTH} 字符（当前：${title.length} 字符）`);
+  }
+  if (content.length > MAX_CONTENT_LENGTH) {
+    throw new Error(`内容不能超过 ${MAX_CONTENT_LENGTH} 字符（当前：${content.length} 字符）`);
+  }
+};
+
+// 输入清理函数 - 防止 XSS 攻击
+const sanitizeInput = (input, maxLength = 10000) => {
+  if (typeof input !== 'string') return '';
+
+  // 移除危险字符（防止脚本注入）
+  let cleaned = input
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // 移除 script 标签
+    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '') // 移除 iframe 标签
+    .replace(/javascript:/gi, '') // 移除 javascript: 协议
+    .replace(/on\w+\s*=/gi, ''); // 移除事件处理器（如 onclick=）
+
+  // 限制长度
+  return cleaned.slice(0, maxLength).trim();
+};
 
 const DEFAULT_CATEGORIES = [
   { name: "产品", slug: "product" },
@@ -86,8 +114,19 @@ function AuthPage({ onLogin }) {
   const [form, setForm] = useState({ email: "", password: "", confirmPassword: "", name: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [lastAttemptTime, setLastAttemptTime] = useState(0);
+
+  const RATE_LIMIT_MS = 2000; // 2 秒速率限制
 
   const handleSubmit = async () => {
+    // 速率限制检查
+    const now = Date.now();
+    if (now - lastAttemptTime < RATE_LIMIT_MS) {
+      const waitTime = Math.ceil((RATE_LIMIT_MS - (now - lastAttemptTime)) / 1000);
+      setError(`请等待 ${waitTime} 秒后重试`);
+      return;
+    }
+
     setError("");
     if (!form.email || !form.password) { setError("请填写完整信息"); return; }
 
@@ -96,6 +135,7 @@ function AuthPage({ onLogin }) {
       if (form.password.length < 6) { setError("密码至少 6 位"); return; }
     }
 
+    setLastAttemptTime(now);
     setLoading(true);
 
     try {
@@ -298,7 +338,7 @@ function AuthPage({ onLogin }) {
 
 // ─── Detail Modal ─────────────────────────────────────────────────────────────
 
-function DetailModal({ prompt, onClose, onCopy, onUpdate, categories, models }) {
+function DetailModal({ prompt, onClose, onCopy, onUpdate, categories, models, onError }) {
   if (!prompt) return null;
   const colors = categoryColors[prompt.categorySlug] || {};
   const [isEditing, setIsEditing] = useState(false);
@@ -313,7 +353,7 @@ function DetailModal({ prompt, onClose, onCopy, onUpdate, categories, models }) 
       setIsEditing(false);
     } catch (error) {
       console.error("更新失败:", error);
-      alert("更新失败: " + error.message);
+      if (onError) onError("更新失败", error.message);
     } finally {
       setSaving(false);
     }
@@ -550,9 +590,63 @@ function AddPromptModal({ onClose, onAdd, categories, loading }) {
   );
 }
 
+// ─── Custom Dialog Components ─────────────────────────────────────────────────
+
+function AlertDialog({ isOpen, title, message, onConfirm, confirmText = "确定" }) {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
+        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center">{title}</h3>
+        <p className="text-sm text-gray-600 mb-6 text-center">{message}</p>
+        <button onClick={onConfirm} className="w-full py-2.5 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 transition-colors">
+          {confirmText}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ConfirmDialog({ isOpen, title, message, onConfirm, onCancel, confirmText = "确认删除", type = "danger" }) {
+  if (!isOpen) return null;
+  const isDanger = type === "danger";
+  return (
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
+        <div className={`w-12 h-12 ${isDanger ? 'bg-red-100' : 'bg-blue-100'} rounded-full flex items-center justify-center mx-auto mb-4`}>
+          {isDanger ? (
+            <svg className="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          ) : (
+            <svg className="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          )}
+        </div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center">{title}</h3>
+        <p className="text-sm text-gray-600 mb-6 text-center">{message}</p>
+        <div className="flex gap-3">
+          <button onClick={onCancel} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+            取消
+          </button>
+          <button onClick={onConfirm} className={`flex-1 py-2.5 rounded-xl text-white text-sm font-semibold transition-colors ${isDanger ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'}`}>
+            {confirmText}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Import Modal ─────────────────────────────────────────────────────────────
 
-function ImportModal({ onClose, onImport, categories }) {
+function ImportModal({ onClose, onImport, categories, onError }) {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState([]);
   const [allData, setAllData] = useState([]);
@@ -598,71 +692,98 @@ function ImportModal({ onClose, onImport, categories }) {
     // Parse CSV
     const reader = new FileReader();
     reader.onload = (event) => {
-      const text = event.target.result;
+      try {
+        const text = event.target.result;
 
-      // Parse CSV with proper handling of quoted fields
-      const parseCSV = (text) => {
-        const lines = [];
-        let currentLine = [];
-        let currentField = '';
-        let inQuotes = false;
+        // 检查空文件
+        if (!text || text.trim().length === 0) {
+          setError('CSV 文件为空');
+          return;
+        }
 
-        for (let i = 0; i < text.length; i++) {
-          const char = text[i];
-          const nextChar = text[i + 1];
+        // Parse CSV with proper handling of quoted fields
+        const parseCSV = (text) => {
+          const lines = [];
+          let currentLine = [];
+          let currentField = '';
+          let inQuotes = false;
+          let quoteCount = 0;
 
-          if (char === '"') {
-            if (inQuotes && nextChar === '"') {
-              // Escaped quote
-              currentField += '"';
+          for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            const nextChar = text[i + 1];
+
+            if (char === '"') {
+              quoteCount++;
+              if (inQuotes && nextChar === '"') {
+                // Escaped quote
+                currentField += '"';
+                i++;
+              } else {
+                // Toggle quote mode
+                inQuotes = !inQuotes;
+              }
+            } else if (char === ',' && !inQuotes) {
+              // Field separator
+              currentLine.push(currentField);
+              currentField = '';
+            } else if (char === '\n' && !inQuotes) {
+              // Line separator
+              currentLine.push(currentField);
+              if (currentLine.some(field => field.trim())) {
+                lines.push(currentLine);
+              }
+              currentLine = [];
+              currentField = '';
+            } else if (char === '\r' && nextChar === '\n' && !inQuotes) {
+              // Windows line separator
+              currentLine.push(currentField);
+              if (currentLine.some(field => field.trim())) {
+                lines.push(currentLine);
+              }
+              currentLine = [];
+              currentField = '';
               i++;
-            } else {
-              // Toggle quote mode
-              inQuotes = !inQuotes;
+            } else if (char !== '\r') {
+              // 忽略单独的 \r 字符
+              currentField += char;
             }
-          } else if (char === ',' && !inQuotes) {
-            // Field separator
-            currentLine.push(currentField);
-            currentField = '';
-          } else if (char === '\n' && !inQuotes) {
-            // Line separator
+          }
+
+          // 检查未闭合的引号
+          if (inQuotes) {
+            throw new Error('CSV 格式错误：引号未闭合');
+          }
+
+          // Last line
+          if (currentField || currentLine.length > 0) {
             currentLine.push(currentField);
             if (currentLine.some(field => field.trim())) {
               lines.push(currentLine);
             }
-            currentLine = [];
-            currentField = '';
-          } else if (char === '\r' && nextChar === '\n' && !inQuotes) {
-            // Windows line separator
-            currentLine.push(currentField);
-            if (currentLine.some(field => field.trim())) {
-              lines.push(currentLine);
-            }
-            currentLine = [];
-            currentField = '';
-            i++;
-          } else {
-            currentField += char;
           }
-        }
 
-        // Last line
-        if (currentField || currentLine.length > 0) {
-          currentLine.push(currentField);
-          if (currentLine.some(field => field.trim())) {
-            lines.push(currentLine);
+          // 检查是否只有标题行
+          if (lines.length <= 1) {
+            throw new Error('CSV 文件没有数据行（只有标题行）');
           }
-        }
 
-        return lines;
-      };
+          return lines;
+        };
 
-      const rows = parseCSV(text);
+        const rows = parseCSV(text);
 
       // Skip header row, parse data
       const data = rows.slice(1).map(row => {
-        // Trim whitespace and quotes from fields
-        const cleanField = (field) => field.trim().replace(/^"|"$/g, '');
+        // Trim whitespace and quotes from fields, prevent CSV injection
+        const cleanField = (field) => {
+          const cleaned = field.trim().replace(/^"|"$/g, '');
+          // 防止 CSV 注入 - 检查是否以危险字符开头 (=, +, -, @)
+          if (/^[=+\-@]/.test(cleaned)) {
+            return "'" + cleaned; // 前缀单引号阻止公式执行
+          }
+          return cleaned;
+        };
 
         return {
           title: cleanField(row[0]) || '',
@@ -681,6 +802,12 @@ function ImportModal({ onClose, onImport, categories }) {
 
       setAllData(data); // Save all data for import
       setPreview(data.slice(0, 10)); // Show first 10 for preview
+      } catch (parseError) {
+        console.error("CSV 解析失败:", parseError);
+        setError('CSV 文件格式错误：' + parseError.message);
+        setAllData([]);
+        setPreview([]);
+      }
     };
     reader.readAsText(selectedFile);
   };
@@ -693,7 +820,7 @@ function ImportModal({ onClose, onImport, categories }) {
       onClose();
     } catch (error) {
       console.error("导入失败:", error);
-      alert("导入失败: " + error.message);
+      if (onError) onError("导入失败", error.message);
     } finally {
       setImporting(false);
     }
@@ -890,6 +1017,8 @@ function MainApp({ user, onLogout }) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [detailPrompt, setDetailPrompt] = useState(null);
+  const [alertDialog, setAlertDialog] = useState({ isOpen: false, title: "", message: "" });
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: "", message: "", onConfirm: null });
 
   // 加载分类
   useEffect(() => {
@@ -1053,12 +1182,19 @@ function MainApp({ user, onLogout }) {
 
   const handleAdd = async (form) => {
     try {
+      // 验证内容长度
+      validatePrompt(form.title, form.content);
+
+      // 清理用户输入
+      const sanitizedTitle = sanitizeInput(form.title, MAX_TITLE_LENGTH);
+      const sanitizedContent = sanitizeInput(form.content, MAX_CONTENT_LENGTH);
+
       const { data, error } = await supabase
         .from("prompts")
         .insert({
           user_id: user.id,
-          title: form.title,
-          content: form.content,
+          title: sanitizedTitle,
+          content: sanitizedContent,
           category_id: form.categoryId,
           model: form.model,
           usage_count: 0
@@ -1078,11 +1214,18 @@ function MainApp({ user, onLogout }) {
 
   const handleUpdate = async (id, form) => {
     try {
+      // 验证内容长度
+      validatePrompt(form.title, form.content);
+
+      // 清理用户输入
+      const sanitizedTitle = sanitizeInput(form.title, MAX_TITLE_LENGTH);
+      const sanitizedContent = sanitizeInput(form.content, MAX_CONTENT_LENGTH);
+
       const { data, error } = await supabase
         .from("prompts")
         .update({
-          title: form.title,
-          content: form.content,
+          title: sanitizedTitle,
+          content: sanitizedContent,
           category_id: form.categoryId,
           model: form.model,
         })
@@ -1117,36 +1260,49 @@ function MainApp({ user, onLogout }) {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("确定要删除这个 Prompt 吗？")) return;
+    // 显示自定义确认对话框
+    setConfirmDialog({
+      isOpen: true,
+      title: "删除 Prompt",
+      message: "确定要删除这个 Prompt 吗？此操作无法撤销。",
+      onConfirm: async () => {
+        try {
+          const { error } = await supabase
+            .from("prompts")
+            .delete()
+            .eq("id", id);
 
-    try {
-      const { error } = await supabase
-        .from("prompts")
-        .delete()
-        .eq("id", id);
+          if (error) throw error;
 
-      if (error) throw error;
-
-      setPrompts(prev => prev.filter(p => p.id !== id));
-    } catch (error) {
-      console.error("删除失败:", error);
-      alert("删除失败: " + error.message);
-    }
+          setPrompts(prev => prev.filter(p => p.id !== id));
+          setConfirmDialog({ isOpen: false, title: "", message: "", onConfirm: null });
+        } catch (error) {
+          console.error("删除失败:", error);
+          setConfirmDialog({ isOpen: false, title: "", message: "", onConfirm: null });
+          setAlertDialog({ isOpen: true, title: "删除失败", message: error.message });
+        }
+      }
+    });
   };
 
   const handleImport = async (data) => {
     try {
+      // 验证所有数据项的长度
+      data.forEach(item => {
+        validatePrompt(item.title, item.content);
+      });
+
       // 将分类名称映射到分类 ID
       const categoryMap = {};
       categories.forEach(cat => {
         categoryMap[cat.name] = cat.id;
       });
 
-      // 准备批量插入数据
+      // 准备批量插入数据（包含输入清理）
       const promptsToInsert = data.map(item => ({
         user_id: user.id,
-        title: item.title,
-        content: item.content,
+        title: sanitizeInput(item.title, MAX_TITLE_LENGTH),
+        content: sanitizeInput(item.content, MAX_CONTENT_LENGTH),
         category_id: categoryMap[item.categoryName] || null,
         model: "通用",
         usage_count: 0
@@ -1175,16 +1331,18 @@ function MainApp({ user, onLogout }) {
     onLogout();
   };
 
-  // 过滤逻辑
-  const filtered = prompts.filter((p) => {
-    // 分类过滤
-    const matchCat = activeCategory === "all" || p.categorySlug === activeCategory;
-    // 搜索过滤
-    const matchSearch = !searchQuery ||
-      p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.content.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchCat && matchSearch;
-  });
+  // 过滤逻辑 - 使用 useMemo 优化性能
+  const filtered = useMemo(() => {
+    return prompts.filter((p) => {
+      // 分类过滤
+      const matchCat = activeCategory === "all" || p.categorySlug === activeCategory;
+      // 搜索过滤
+      const matchSearch = !searchQuery ||
+        p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.content.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchCat && matchSearch;
+    });
+  }, [prompts, activeCategory, searchQuery]);
 
   // 构建分类列表（包含"全部"）
   // 使用 categorySlug 统计，因为这个字段更可靠
@@ -1351,6 +1509,7 @@ function MainApp({ user, onLogout }) {
           onClose={() => setShowImportModal(false)}
           onImport={handleImport}
           categories={categories}
+          onError={(title, message) => setAlertDialog({ isOpen: true, title, message })}
         />
       )}
       {detailPrompt && (
@@ -1361,8 +1520,24 @@ function MainApp({ user, onLogout }) {
           onUpdate={handleUpdate}
           categories={categories}
           models={MODELS}
+          onError={(title, message) => setAlertDialog({ isOpen: true, title, message })}
         />
       )}
+
+      {/* Custom Dialogs */}
+      <AlertDialog
+        isOpen={alertDialog.isOpen}
+        title={alertDialog.title}
+        message={alertDialog.message}
+        onConfirm={() => setAlertDialog({ isOpen: false, title: "", message: "" })}
+      />
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog({ isOpen: false, title: "", message: "", onConfirm: null })}
+      />
     </div>
   );
 }
