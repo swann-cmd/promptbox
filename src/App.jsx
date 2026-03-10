@@ -1187,11 +1187,19 @@ function MainApp({ user, onLogout }) {
   });
 
   // 构建分类列表（包含"全部"）
+  // 使用 categorySlug 统计，因为这个字段更可靠
+  const categoryCounts = prompts.reduce((acc, p) => {
+    if (p.categorySlug) {
+      acc[p.categorySlug] = (acc[p.categorySlug] || 0) + 1;
+    }
+    return acc;
+  }, {});
+
   const allCategories = [
     { id: "all", slug: "all", name: "全部", count: prompts.length },
     ...categories.map(c => ({
       ...c,
-      count: prompts.filter(p => p.categoryId === c.id).length
+      count: categoryCounts[c.slug] || 0
     }))
   ];
 
