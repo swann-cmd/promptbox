@@ -540,6 +540,137 @@ function AddPromptModal({ onClose, onAdd, categories, loading }) {
   );
 }
 
+// ─── Import Modal ─────────────────────────────────────────────────────────────
+
+function ImportModal({ onClose, onImport, categories }) {
+  const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState([]);
+  const [importing, setImporting] = useState(false);
+
+  const handleFileSelect = (e) => {
+    const selectedFile = e.target.files[0];
+    if (!selectedFile) return;
+
+    setFile(selectedFile);
+
+    // Parse CSV
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target.result;
+      const lines = text.split('\n').filter(line => line.trim());
+
+      // Skip header row, parse data
+      const data = lines.slice(1).map(line => {
+        const parts = line.split(',');
+        return {
+          title: parts[0]?.trim() || '',
+          content: parts[1]?.trim() || '',
+          categoryName: parts[2]?.trim() || ''
+        };
+      }).filter(item => item.title && item.content);
+
+      setPreview(data.slice(0, 10)); // Show first 10 for preview
+    };
+    reader.readAsText(selectedFile);
+  };
+
+  const handleImport = async () => {
+    if (!file || preview.length === 0) return;
+    setImporting(true);
+    try {
+      await onImport(preview);
+      onClose();
+    } catch (error) {
+      console.error("导入失败:", error);
+      alert("导入失败: " + error.message);
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl p-6">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-base font-semibold text-gray-900">导入 Prompts</h2>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
+            <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {/* File Upload */}
+          <div className="border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center hover:border-blue-300 transition-colors">
+            <input
+              type="file"
+              accept=".csv"
+              onChange={handleFileSelect}
+              className="hidden"
+              id="csv-upload"
+            />
+            <label htmlFor="csv-upload" className="cursor-pointer">
+              <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <svg className="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+              </div>
+              <p className="text-sm font-medium text-gray-700 mb-1">点击上传 CSV 文件</p>
+              <p className="text-xs text-gray-400">支持格式：CSV（标题,内容,分类）</p>
+            </label>
+            {file && (
+              <p className="text-xs text-blue-500 mt-2">已选择：{file.name}</p>
+            )}
+          </div>
+
+          {/* Preview */}
+          {preview.length > 0 && (
+            <div>
+              <p className="text-xs font-medium text-gray-500 mb-2">预览（前 10 条）</p>
+              <div className="border border-gray-200 rounded-xl overflow-hidden max-h-64 overflow-y-auto">
+                <table className="w-full text-xs">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-3 py-2 text-left font-medium text-gray-500">标题</th>
+                      <th className="px-3 py-2 text-left font-medium text-gray-500">内容</th>
+                      <th className="px-3 py-2 text-left font-medium text-gray-500">分类</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {preview.map((item, idx) => (
+                      <tr key={idx} className="hover:bg-gray-50">
+                        <td className="px-3 py-2 text-gray-900 max-w-xs truncate">{item.title}</td>
+                        <td className="px-3 py-2 text-gray-500 max-w-xs truncate">{item.content}</td>
+                        <td className="px-3 py-2">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-blue-50 text-blue-600">
+                            {item.categoryName || '未分类'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-3 mt-5">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">取消</button>
+          <button
+            onClick={handleImport}
+            disabled={!file || preview.length === 0 || importing}
+            className="flex-1 py-2.5 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {importing ? "导入中..." : `导入 ${preview.length} 条`}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Prompt Card ──────────────────────────────────────────────────────────────
 
 function PromptCard({ prompt, onCopy, onClick, onDelete }) {
@@ -609,6 +740,7 @@ function MainApp({ user, onLogout }) {
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [detailPrompt, setDetailPrompt] = useState(null);
 
   // 加载分类
@@ -814,6 +946,42 @@ function MainApp({ user, onLogout }) {
     }
   };
 
+  const handleImport = async (data) => {
+    try {
+      // 将分类名称映射到分类 ID
+      const categoryMap = {};
+      categories.forEach(cat => {
+        categoryMap[cat.name] = cat.id;
+      });
+
+      // 准备批量插入数据
+      const promptsToInsert = data.map(item => ({
+        user_id: user.id,
+        title: item.title,
+        content: item.content,
+        category_id: categoryMap[item.categoryName] || null,
+        model: "通用",
+        usage_count: 0
+      }));
+
+      // 批量插入
+      const { data: insertedData, error } = await supabase
+        .from("prompts")
+        .insert(promptsToInsert)
+        .select();
+
+      if (error) throw error;
+
+      // 刷新列表
+      await fetchPrompts();
+
+      return insertedData;
+    } catch (error) {
+      console.error("导入失败:", error);
+      throw error;
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     onLogout();
@@ -866,6 +1034,15 @@ function MainApp({ user, onLogout }) {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
               </svg>
               新增
+            </button>
+            <button
+              onClick={() => setShowImportModal(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-xl border border-gray-200 transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              导入
             </button>
             <div className="flex items-center gap-2 pl-3 border-l border-gray-100">
               <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center">
@@ -970,6 +1147,13 @@ function MainApp({ user, onLogout }) {
         <AddPromptModal
           onClose={() => setShowAddModal(false)}
           onAdd={handleAdd}
+          categories={categories}
+        />
+      )}
+      {showImportModal && (
+        <ImportModal
+          onClose={() => setShowImportModal(false)}
+          onImport={handleImport}
           categories={categories}
         />
       )}
