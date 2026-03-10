@@ -66,7 +66,9 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - 项目创建并成功部署（2小时38分钟）
 - 配置了 Feature Branch 工作流
 - 添加了详情页编辑功能
-- 添加了 CSV 导入功能
+- 添加了 CSV 导入功能（导入限制：500条/4.5MB）
+- 更新分类系统到10个分类
+- 添加导入模板下载功能
 
 ## 备注
 - 用户体验优先，字号不要太小
