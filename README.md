@@ -122,6 +122,12 @@ npm run dev
 3. 配置环境变量
 4. 部署完成
 
+## 开发工作流
+
+本项目使用 **Feature Branch 工作流**，确保生产环境稳定。
+
+详细说明请查看：[WORKFLOW.md](./WORKFLOW.md)
+
 ## 开发计划
 
 - [ ] 添加 Prompt 模板功能
