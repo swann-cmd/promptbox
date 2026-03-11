@@ -82,6 +82,9 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
   - 优化手机端响应式布局（按钮图标、头像比例）
   - **导出 Prompts 功能**：支持 CSV、JSON、Markdown 三种格式
   - **Prompt 模板功能**：11个预设模板，双模式创建
+- **代码审查和修复**：修复导出和模板功能的2个严重问题
+  - 修复 ExportModal 内存泄漏风险（URL.revokeObjectURL 释放时机）
+  - 修复 AddPromptModal 分类映射逻辑（使用 slug + name 双匹配 + 默认值）
 
 ## 备注
 - 用户体验优先，字号不要太小

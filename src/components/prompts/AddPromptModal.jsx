@@ -41,10 +41,16 @@ function AddPromptModal({ onClose, onAdd, categories }) {
   // 应用模板
   const applyTemplate = (template) => {
     setSelectedTemplate(template);
+
+    // 更健壮的分类匹配：先尝试 slug 匹配，再尝试名称匹配，最后使用第一个分类作为默认值
+    const matchedCategory = categories.find(c => c.slug === template.category) ||
+                            categories.find(c => c.name === template.categoryName) ||
+                            categories[0];
+
     setForm({
       title: template.title,
       content: template.content,
-      categoryId: categories.find(c => c.slug === template.category)?.id || "",
+      categoryId: matchedCategory?.id || "",
       model: template.model
     });
     setMode("manual");
