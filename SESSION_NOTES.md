@@ -85,6 +85,9 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - **代码审查和修复**：修复导出和模板功能的2个严重问题
   - 修复 ExportModal 内存泄漏风险（URL.revokeObjectURL 释放时机）
   - 修复 AddPromptModal 分类映射逻辑（使用 slug + name 双匹配 + 默认值）
+- **全面修复**：修复导出和模板功能的全部剩余问题（9个）
+  - ExportModal: null/undefined 验证、CSV 防注入、JSON 键名、Markdown 转义
+  - AddPromptModal: XSS 防护、预定义分类、搜索功能、性能优化、撤销选择
 
 ## 备注
 - 用户体验优先，字号不要太小
