@@ -9,7 +9,7 @@ import { copyCommunityPrompt, incrementViewCount, withdrawCommunityPrompt } from
 /**
  * 社区提示词详情模态框
  */
-function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose, onError, onCopy }) {
+function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose, onError, onCopy, onWithdraw }) {
   const [viewCount, setViewCount] = useState(prompt.view_count || 0);
   const [copying, setCopying] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
@@ -66,6 +66,8 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
       if (onError) onError("撤回成功", "提示词已从社区撤回");
       // 关闭详情页
       onClose();
+      // 刷新社区列表
+      if (onWithdraw) onWithdraw();
     } catch (error) {
       console.error("撤回失败:", error);
       if (onError) onError("撤回失败", error.message);

@@ -315,6 +315,10 @@ function CommunityPage({ user, onClose, onError }) {
             // 刷新列表
             fetchCommunityPrompts();
           }}
+          onWithdraw={() => {
+            // 刷新列表
+            fetchCommunityPrompts();
+          }}
         />
       )}
     </div>

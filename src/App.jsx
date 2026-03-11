@@ -614,6 +614,39 @@ export default function App() {
     setAlertDialog({ isOpen: true, title, message });
   }, []);
 
+  // 打开/关闭社区页面时更新 URL hash
+  useEffect(() => {
+    if (showCommunity) {
+      window.location.hash = 'community';
+    } else {
+      if (window.location.hash === '#community') {
+        history.pushState(null, null, ' ');
+      }
+    }
+  }, [showCommunity]);
+
+  // 监听 hash 变化，自动打开/关闭社区页面
+  useEffect(() => {
+    const handleHashChange = () => {
+      if (window.location.hash === '#community') {
+        setShowCommunity(true);
+      } else if (window.location.hash === '' && showCommunity) {
+        setShowCommunity(false);
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+
+    // 初始化时检查 hash
+    if (window.location.hash === '#community') {
+      setShowCommunity(true);
+    }
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, [showCommunity]);
+
   useEffect(() => {
     // 检查当前会话
     supabase.auth.getSession().then(({ data: { session } }) => {
