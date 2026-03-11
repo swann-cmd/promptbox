@@ -107,8 +107,47 @@ function MainApp({ user, onLogout, onShowCommunity, onShowAlert }) {
           setCategories(newData || []);
         }
       } else {
-        // 使用去重后的分类数据
-        setCategories(uniqueCategories);
+        // 检查是否有新增的默认分类，自动补充
+        const existingSlugs = new Set(uniqueCategories.map(cat => cat.slug));
+        const missingCategories = DEFAULT_CATEGORIES.filter(
+          defaultCat => !existingSlugs.has(defaultCat.slug)
+        );
+
+        if (missingCategories.length > 0) {
+          console.log("检测到新增的分类，正在补充:", missingCategories.map(c => c.name));
+          const newCategories = missingCategories.map(cat => ({
+            user_id: user.id,
+            name: cat.name,
+            slug: cat.slug
+          }));
+
+          const { data: newData, error: insertError } = await supabase
+            .from("categories")
+            .insert(newCategories)
+            .select();
+
+          if (!insertError && newData) {
+            console.log("新分类补充成功:", newData);
+            // 合并新旧分类，按 DEFAULT_CATEGORIES 的顺序排列
+            const allCategories = [
+              ...newData,
+              ...uniqueCategories
+            ];
+            // 按照默认分类的顺序排序
+            const orderedCategories = DEFAULT_CATEGORIES
+              .map(defaultCat =>
+                allCategories.find(cat => cat.slug === defaultCat.slug)
+              )
+              .filter(Boolean); // 过滤掉 undefined
+            setCategories(orderedCategories);
+          } else {
+            console.warn("补充新分类失败，使用现有分类:", insertError);
+            setCategories(uniqueCategories);
+          }
+        } else {
+          // 使用去重后的分类数据
+          setCategories(uniqueCategories);
+        }
       }
     } catch (error) {
       console.error("加载分类失败:", error);
