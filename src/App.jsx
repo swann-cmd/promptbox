@@ -7,6 +7,7 @@ import PromptCard from "./components/prompts/PromptCard";
 import DetailModal from "./components/prompts/DetailModal";
 import AddPromptModal from "./components/prompts/AddPromptModal";
 import ImportModal from "./components/prompts/ImportModal";
+import ExportModal from "./components/prompts/ExportModal";
 import AlertDialog from "./components/ui/dialogs/AlertDialog";
 import ConfirmDialog from "./components/ui/dialogs/ConfirmDialog";
 
@@ -17,7 +18,7 @@ import { validatePrompt } from "./utils/validation";
 import { sanitizeInput } from "./utils/sanitize";
 
 // Icons
-import { LogoIcon, CloseIcon, PlusIcon, UploadIcon, SearchIcon, LoadingSpinner, EmptyStateIcon } from "./components/ui/icons";
+import { LogoIcon, CloseIcon, PlusIcon, UploadIcon, DownloadIcon, SearchIcon, LoadingSpinner, EmptyStateIcon } from "./components/ui/icons";
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
 
@@ -34,6 +35,7 @@ function MainApp({ user, onLogout }) {
   const [detailPrompt, setDetailPrompt] = useState(null);
   const [alertDialog, setAlertDialog] = useState({ isOpen: false, title: "", message: "" });
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: "", message: "", onConfirm: null });
+  const [showExportModal, setShowExportModal] = useState(false);
 
   // 加载分类
   useEffect(() => {
@@ -362,6 +364,14 @@ function MainApp({ user, onLogout }) {
               <UploadIcon />
               <span className="hidden sm:inline">导入</span>
             </button>
+            <button
+              onClick={() => setShowExportModal(true)}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-2 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-xl border border-gray-200 transition-colors"
+              title="导出"
+            >
+              <DownloadIcon />
+              <span className="hidden sm:inline">导出</span>
+            </button>
             <div className="flex items-center gap-2 pl-2 sm:pl-3 border-l border-gray-100">
               <div className="w-8 h-8 sm:w-7 sm:h-7 rounded-full bg-blue-100 flex items-center justify-center aspect-square">
                 <span className="text-xs font-semibold text-blue-600">
@@ -486,6 +496,14 @@ function MainApp({ user, onLogout }) {
         <ImportModal
           onClose={() => setShowImportModal(false)}
           onImport={handleImport}
+          categories={categories}
+          onError={(title, message) => setAlertDialog({ isOpen: true, title, message })}
+        />
+      )}
+      {showExportModal && (
+        <ExportModal
+          onClose={() => setShowExportModal(false)}
+          prompts={prompts}
           categories={categories}
           onError={(title, message) => setAlertDialog({ isOpen: true, title, message })}
         />
