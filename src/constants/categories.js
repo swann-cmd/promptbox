@@ -3,8 +3,9 @@
  */
 
 export const DEFAULT_CATEGORIES = [
-  { name: "产品", slug: "product" },
   { name: "写作", slug: "writing" },
+  { name: "视频", slug: "video" },
+  { name: "产品", slug: "product" },
   { name: "数据", slug: "data" },
   { name: "学习", slug: "learning" },
   { name: "AI", slug: "ai" },
@@ -12,7 +13,6 @@ export const DEFAULT_CATEGORIES = [
   { name: "思维", slug: "thinking" },
   { name: "个人效率", slug: "productivity" },
   { name: "开发", slug: "development" },
-  { name: "视频", slug: "video" },
 ];
 
 export const CATEGORY_COLORS = {
