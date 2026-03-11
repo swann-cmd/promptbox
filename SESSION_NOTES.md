@@ -54,10 +54,10 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - ✅ CSV 导入功能（中文表头：标题,文案,分类）
 - ✅ 下载导入模板
 - ✅ 自动更新旧用户到新分类系统
+- ✅ **导出 Prompts 功能（CSV、JSON、Markdown）**
+- ✅ **Prompt 模板功能（11 个预设模板）**
 
 ## 待办功能
-- [ ] 添加 Prompt 模板功能
-- [ ] 支持导出 Prompts
 - [ ] 添加 Prompt 使用统计
 - [ ] 支持多语言
 - [ ] 添加 Prompt 分享功能
@@ -77,6 +77,11 @@ VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - **工作流程优化**：添加 code review 提醒机制
   - 每次功能开发完成、准备提交前，必须询问用户是否需要 code review
   - 使用 `feature-dev:code-reviewer` 技能进行代码审查
+- **功能扩展**：
+  - 修复分类 tab 重复显示的 bug
+  - 优化手机端响应式布局（按钮图标、头像比例）
+  - **导出 Prompts 功能**：支持 CSV、JSON、Markdown 三种格式
+  - **Prompt 模板功能**：11个预设模板，双模式创建
 
 ## 备注
 - 用户体验优先，字号不要太小
