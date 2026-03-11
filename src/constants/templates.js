@@ -496,3 +496,22 @@ export function searchTemplates(query) {
     t.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
   );
 }
+
+/**
+ * 获取所有预定义的分类
+ * 返回去重后的分类列表
+ */
+export function getTemplateCategories() {
+  const categoryMap = new Map();
+
+  PROMPT_TEMPLATES.forEach(template => {
+    if (!categoryMap.has(template.category)) {
+      categoryMap.set(template.category, {
+        slug: template.category,
+        name: template.categoryName
+      });
+    }
+  });
+
+  return Array.from(categoryMap.values());
+}

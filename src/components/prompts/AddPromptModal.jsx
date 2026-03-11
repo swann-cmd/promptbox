@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
 import { MODELS } from "../../constants/app";
-import { PROMPT_TEMPLATES, getTemplatesByCategory } from "../../constants/templates";
+import { PROMPT_TEMPLATES, getTemplatesByCategory, getTemplateCategories } from "../../constants/templates";
 import { CloseIcon, DocumentIcon } from "../ui/icons";
+import { sanitizeInput } from "../../utils/sanitize";
 
 /**
  * 添加提示词模态框组件（支持从模板创建）
@@ -10,6 +11,7 @@ function AddPromptModal({ onClose, onAdd, categories }) {
   const [mode, setMode] = useState("manual"); // manual | template
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [templateCategory, setTemplateCategory] = useState("all");
+  const [templateSearchQuery, setTemplateSearchQuery] = useState("");
 
   const [form, setForm] = useState({
     title: "",
@@ -19,10 +21,35 @@ function AddPromptModal({ onClose, onAdd, categories }) {
   });
   const [submitting, setSubmitting] = useState(false);
 
-  // 根据模板分类筛选模板
+  // 根据模板分类和搜索词筛选模板
   const filteredTemplates = useMemo(() => {
-    return getTemplatesByCategory(templateCategory);
-  }, [templateCategory]);
+    let templates = getTemplatesByCategory(templateCategory);
+
+    // 应用搜索过滤
+    if (templateSearchQuery.trim()) {
+      const lowerQuery = templateSearchQuery.toLowerCase();
+      templates = templates.filter(t =>
+        t.title.toLowerCase().includes(lowerQuery) ||
+        t.content.toLowerCase().includes(lowerQuery) ||
+        t.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
+      );
+    }
+
+    return templates;
+  }, [templateCategory, templateSearchQuery]);
+
+  // 获取预定义的模板分类列表（而非用户分类）
+  const templateCategories = useMemo(() => {
+    return getTemplateCategories();
+  }, []);
+
+  // 缓存模板摘要，避免每次渲染都 substring（性能优化）
+  const templatesWithPreview = useMemo(() => {
+    return filteredTemplates.map(template => ({
+      ...template,
+      preview: template.content.substring(0, 100)
+    }));
+  }, [filteredTemplates]);
 
   const handleSubmit = async () => {
     if (!form.title.trim() || !form.content.trim()) return;
@@ -47,13 +74,26 @@ function AddPromptModal({ onClose, onAdd, categories }) {
                             categories.find(c => c.name === template.categoryName) ||
                             categories[0];
 
+    // 对模板内容进行安全清理，防止 XSS 攻击
     setForm({
-      title: template.title,
-      content: template.content,
+      title: sanitizeInput(template.title, 200),
+      content: sanitizeInput(template.content, 10000),
       categoryId: matchedCategory?.id || "",
       model: template.model
     });
     setMode("manual");
+  };
+
+  // 撤销模板选择
+  const resetTemplateSelection = () => {
+    setSelectedTemplate(null);
+    setForm({
+      title: "",
+      content: "",
+      categoryId: "",
+      model: "通用"
+    });
+    setMode("template");
   };
 
   const isFormValid = form.title.trim() && form.content.trim() && form.categoryId;
@@ -95,6 +135,24 @@ function AddPromptModal({ onClose, onAdd, categories }) {
         {/* Manual Mode */}
         {mode === "manual" && (
           <div className="space-y-4">
+            {/* 撤销模板选择按钮 */}
+            {selectedTemplate && (
+              <div className="flex items-center justify-between bg-blue-50 rounded-xl px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <DocumentIcon />
+                  <span className="text-sm text-blue-700">
+                    已应用模板：<span className="font-semibold">{selectedTemplate.title}</span>
+                  </span>
+                </div>
+                <button
+                  onClick={resetTemplateSelection}
+                  className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  重新选择
+                </button>
+              </div>
+            )}
+
             <div>
               <label className="text-xs font-medium text-gray-500 block mb-1.5">标题</label>
               <input
@@ -154,7 +212,7 @@ function AddPromptModal({ onClose, onAdd, categories }) {
         {/* Template Mode */}
         {mode === "template" && (
           <div className="space-y-4">
-            {/* Category Filter */}
+            {/* Category Filter - 使用预定义的模板分类 */}
             <div>
               <label className="text-xs font-medium text-gray-500 block mb-1.5">筛选分类</label>
               <select
@@ -163,16 +221,32 @@ function AddPromptModal({ onClose, onAdd, categories }) {
                 onChange={(e) => setTemplateCategory(e.target.value)}
               >
                 <option value="all">全部分类</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.slug}>{c.name}</option>
+                {templateCategories.map((c) => (
+                  <option key={c.slug} value={c.slug}>{c.name}</option>
                 ))}
               </select>
+            </div>
+
+            {/* Search Box */}
+            <div>
+              <label className="text-xs font-medium text-gray-500 block mb-1.5">搜索模板</label>
+              <input
+                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
+                placeholder="搜索模板标题、内容或标签..."
+                value={templateSearchQuery}
+                onChange={(e) => setTemplateSearchQuery(e.target.value)}
+              />
+              {templateSearchQuery && (
+                <p className="text-xs text-gray-500 mt-1">
+                  找到 {templatesWithPreview.length} 个结果
+                </p>
+              )}
             </div>
 
             {/* Template List */}
             <div className="border border-gray-200 rounded-xl overflow-hidden max-h-96 overflow-y-auto">
               <div className="divide-y divide-gray-100">
-                {filteredTemplates.map((template) => (
+                {templatesWithPreview.map((template) => (
                   <button
                     key={template.id}
                     onClick={() => applyTemplate(template)}
@@ -184,7 +258,7 @@ function AddPromptModal({ onClose, onAdd, categories }) {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="text-sm font-semibold text-gray-900 mb-0.5">{template.title}</h3>
-                        <p className="text-xs text-gray-500 line-clamp-2">{template.content.substring(0, 100)}...</p>
+                        <p className="text-xs text-gray-500 line-clamp-2">{template.preview}...</p>
                         <div className="flex flex-wrap gap-1.5 mt-2">
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-600">
                             {template.categoryName}

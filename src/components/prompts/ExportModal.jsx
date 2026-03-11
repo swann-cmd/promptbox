@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { CloseIcon, DownloadIcon } from "../ui/icons";
+import { sanitizeCSVField } from "../../utils/sanitize";
 
 /**
  * 导出提示词模态框组件
@@ -70,11 +71,16 @@ function ExportModal({ onClose, prompts, categories, onError }) {
   const exportToCSV = () => {
     const headers = "标题,提示词文案,分类,模型,使用次数,创建时间";
     const rows = filteredPrompts.map(p => {
-      // 处理可能包含逗号和引号的字段
+      // 安全处理字段 - 防止 CSV 注入和空值
       const escapeField = (field) => {
-        if (!field) return '""';
-        const str = String(field).replace(/"/g, '""');
-        return `"${str}"`;
+        if (field === null || field === undefined) return '""';
+
+        // 先使用 sanitizeCSVField 防止注入
+        const sanitized = sanitizeCSVField(String(field));
+
+        // 处理逗号和引号
+        const escaped = sanitized.replace(/"/g, '""');
+        return `"${escaped}"`;
       };
 
       return [
@@ -82,8 +88,8 @@ function ExportModal({ onClose, prompts, categories, onError }) {
         escapeField(p.content),
         escapeField(p.categoryName || ''),
         escapeField(p.model),
-        escapeField(p.usageCount),
-        escapeField(new Date(p.createdAt).toLocaleDateString('zh-CN'))
+        escapeField(p.usageCount || 0),
+        escapeField(p.createdAt ? new Date(p.createdAt).toLocaleDateString('zh-CN') : '')
       ].join(",");
     });
 
@@ -92,12 +98,12 @@ function ExportModal({ onClose, prompts, categories, onError }) {
 
   const exportToJSON = () => {
     const data = filteredPrompts.map(p => ({
-      标题: p.title,
-      提示词文案: p.content,
-      分类: p.categoryName,
-      模型: p.model,
-      使用次数: p.usageCount,
-      创建时间: new Date(p.createdAt).toLocaleDateString('zh-CN')
+      title: p.title || "",
+      content: p.content || "",
+      category: p.categoryName || "未分类",
+      model: p.model || "通用",
+      usageCount: p.usageCount || 0,
+      createdAt: p.createdAt ? new Date(p.createdAt).toLocaleDateString('zh-CN') : ""
     }));
 
     return JSON.stringify(data, null, 2);
@@ -109,14 +115,29 @@ function ExportModal({ onClose, prompts, categories, onError }) {
     lines.push(`导出时间：${new Date().toLocaleString('zh-CN')}`);
     lines.push(`总计：${filteredPrompts.length} 条提示词\n`);
 
+    // Markdown 特殊字符转义函数
+    const escapeMarkdown = (text) => {
+      if (!text) return "";
+      // 转义标题中的特殊字符
+      return String(text)
+        .replace(/\*/g, '\\*')  // 星号
+        .replace(/_/g, '\\_')   // 下划线
+        .replace(/#/g, '\\#')   // 井号
+        .replace(/\[/g, '\\[')  // 左方括号
+        .replace(/\]/g, '\\]')  // 右方括号
+        .replace(/\(/g, '\\(')  // 左圆括号
+        .replace(/\)/g, '\\)'); // 右圆括号
+    };
+
     filteredPrompts.forEach((p, index) => {
-      lines.push(`## ${index + 1}. ${p.title}`);
+      const safeTitle = escapeMarkdown(p.title || "无标题");
+      lines.push(`## ${index + 1}. ${safeTitle}`);
       lines.push("");
-      lines.push(`**分类**: ${p.categoryName || '未分类'}  |  **模型**: ${p.model}  |  **使用次数**: ${p.usageCount}`);
+      lines.push(`**分类**: ${p.categoryName || '未分类'}  |  **模型**: ${p.model || '通用'}  |  **使用次数**: ${p.usageCount || 0}`);
       lines.push("");
       lines.push("### 提示词内容");
       lines.push("```");
-      lines.push(p.content);
+      lines.push(p.content || "");
       lines.push("```");
       lines.push("");
     });
