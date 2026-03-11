@@ -4,7 +4,7 @@ import CopyButton from "../ui/CopyButton";
 import LikeButton from "./LikeButton";
 import FavoriteButton from "./FavoriteButton";
 import { CloseIcon, ViewIcon, CopySmallIcon, UserIcon, DateIcon } from "../ui/icons";
-import { copyCommunityPrompt, incrementViewCount } from "../../utils/community";
+import { copyCommunityPrompt, incrementViewCount, withdrawCommunityPrompt } from "../../utils/community";
 
 /**
  * 社区提示词详情模态框
@@ -12,7 +12,11 @@ import { copyCommunityPrompt, incrementViewCount } from "../../utils/community";
 function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose, onError, onCopy }) {
   const [viewCount, setViewCount] = useState(prompt.view_count || 0);
   const [copying, setCopying] = useState(false);
+  const [withdrawing, setWithdrawing] = useState(false);
   const hasViewedRef = useRef(false);
+
+  // 检查是否为该提示词的作者
+  const isAuthor = user && user.id === prompt.user_id;
 
   useEffect(() => {
     // Prevent double counting with ref
@@ -48,6 +52,25 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
       if (onError) onError("复制失败", error.message);
     } finally {
       setCopying(false);
+    }
+  };
+
+  const handleWithdraw = async () => {
+    if (!confirm("确定要撤回这条提示词吗？撤回后将不再显示在社区广场。")) {
+      return;
+    }
+
+    setWithdrawing(true);
+    try {
+      await withdrawCommunityPrompt(prompt.id);
+      if (onError) onError("撤回成功", "提示词已从社区撤回");
+      // 关闭详情页
+      onClose();
+    } catch (error) {
+      console.error("撤回失败:", error);
+      if (onError) onError("撤回失败", error.message);
+    } finally {
+      setWithdrawing(false);
     }
   };
 
@@ -164,6 +187,15 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
                 initialFavorited={userFavorites.has(prompt.id)}
                 size="md"
               />
+              {isAuthor && (
+                <button
+                  onClick={handleWithdraw}
+                  disabled={withdrawing}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span>{withdrawing ? "撤回中..." : "撤回发布"}</span>
+                </button>
+              )}
               <button
                 onClick={handleCopy}
                 disabled={copying}

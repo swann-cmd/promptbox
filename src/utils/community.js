@@ -74,6 +74,25 @@ async function toggleFavorite(communityPromptId) {
 }
 
 /**
+ * Withdraw a published community prompt
+ */
+async function withdrawCommunityPrompt(communityPromptId) {
+  // Check authentication first
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    throw new Error("请先登录");
+  }
+
+  const { data, error } = await supabase.rpc("withdraw_community_prompt", {
+    p_community_prompt_id: communityPromptId,
+  });
+
+  if (error) throw error;
+
+  return data;
+}
+
+/**
  * Format prompt data from Supabase to app format
  */
 function formatPromptData(data, publishedPromptIds = new Set()) {
@@ -186,6 +205,7 @@ export {
   incrementViewCount,
   toggleLike,
   toggleFavorite,
+  withdrawCommunityPrompt,
   formatPromptData,
   formatCommunityPromptData,
   fetchUserInteractions,
