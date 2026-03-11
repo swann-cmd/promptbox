@@ -345,23 +345,25 @@ function MainApp({ user, onLogout }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold rounded-xl transition-colors shadow-sm shadow-blue-200"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold rounded-xl transition-colors shadow-sm shadow-blue-200"
+              title="新增"
             >
               <PlusIcon />
-              新增
+              <span className="hidden sm:inline">新增</span>
             </button>
             <button
               onClick={() => setShowImportModal(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-xl border border-gray-200 transition-colors"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-2 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-xl border border-gray-200 transition-colors"
+              title="导入"
             >
               <UploadIcon />
-              导入
+              <span className="hidden sm:inline">导入</span>
             </button>
-            <div className="flex items-center gap-2 pl-3 border-l border-gray-100">
-              <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center">
+            <div className="flex items-center gap-2 pl-2 sm:pl-3 border-l border-gray-100">
+              <div className="w-8 h-8 sm:w-7 sm:h-7 rounded-full bg-blue-100 flex items-center justify-center aspect-square">
                 <span className="text-xs font-semibold text-blue-600">
                   {user.name?.[0]?.toUpperCase() || "U"}
                 </span>
