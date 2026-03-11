@@ -1,22 +1,61 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import CategoryBadge from "../ui/CategoryBadge";
 import CopyButton from "../ui/CopyButton";
-import { CloseIcon, EditIcon, UsageIcon, DateIcon } from "../ui/icons";
+import PublishModal from "../community/PublishModal";
+import AlertDialog from "../ui/dialogs/AlertDialog";
+import { CloseIcon, EditIcon, UsageIcon, DateIcon, CommunityIcon } from "../ui/icons";
+import { useTagManager, MAX_TAGS } from "../../hooks/useTagManager";
 
 /**
  * 提示词详情模态框组件
  */
-function DetailModal({ prompt, onClose, onCopy, onUpdate, categories, models, onError }) {
-  if (!prompt) return null;
+function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPublishSuccess, categories, models, onError, user }) {
+  if (!initialPrompt) return null;
 
   const [isEditing, setIsEditing] = useState(false);
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [prompt, setPrompt] = useState(initialPrompt);
+  const [alertDialog, setAlertDialog] = useState({ isOpen: false, title: "", message: "", type: "warning" });
   const [form, setForm] = useState({
     title: prompt.title,
     content: prompt.content,
     categoryId: prompt.categoryId,
-    model: prompt.model
+    model: prompt.model,
+    tags: prompt.tags || []
   });
   const [saving, setSaving] = useState(false);
+
+  const {
+    tags,
+    setTags,
+    tagInput,
+    setTagInput,
+    addTag,
+    removeTag,
+    handleKeyDown,
+    canAddMore,
+  } = useTagManager(prompt.tags || []);
+
+  // 同步 tag 状态到 form
+  useEffect(() => {
+    setForm(prev => ({ ...prev, tags }));
+  }, [tags]);
+
+  // 当 initialPrompt 变化时，同步本地 prompt 状态
+  useEffect(() => {
+    setPrompt(initialPrompt);
+  }, [initialPrompt]);
+
+  // 当 prompt 更新时，同步表单数据
+  useEffect(() => {
+    setForm({
+      title: prompt.title,
+      content: prompt.content,
+      categoryId: prompt.categoryId,
+      model: prompt.model,
+      tags: prompt.tags || []
+    });
+  }, [prompt.id, prompt.title, prompt.content, prompt.categoryId, prompt.model, prompt.tags]);
 
   const handleSave = async () => {
     if (!form.title.trim() || !form.content.trim()) return;
@@ -34,11 +73,15 @@ function DetailModal({ prompt, onClose, onCopy, onUpdate, categories, models, on
   };
 
   const handleCancel = () => {
+    const originalTags = prompt.tags || [];
+    setTags(originalTags);
+    setTagInput("");
     setForm({
       title: prompt.title,
       content: prompt.content,
       categoryId: prompt.categoryId,
-      model: prompt.model
+      model: prompt.model,
+      tags: originalTags
     });
     setIsEditing(false);
   };
@@ -151,18 +194,90 @@ function DetailModal({ prompt, onClose, onCopy, onUpdate, categories, models, on
         {/* Content */}
         <div className="px-6 py-5 overflow-y-auto" style={{ maxHeight: "calc(85vh - 200px)" }}>
           {isEditing ? (
-            <textarea
-              className="w-full bg-gray-50 rounded-2xl p-4 text-sm text-gray-700 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 border-2 border-transparent focus:border-blue-400 transition-all"
-              rows={12}
-              value={form.content}
-              onChange={(e) => setForm({ ...form, content: e.target.value })}
-              placeholder="输入提示词内容..."
-            />
+            <div className="space-y-4">
+              <textarea
+                className="w-full bg-gray-50 rounded-2xl p-4 text-sm text-gray-700 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 border-2 border-transparent focus:border-blue-400 transition-all"
+                rows={8}
+                value={form.content}
+                onChange={(e) => setForm({ ...form, content: e.target.value })}
+                placeholder="输入提示词内容..."
+              />
+
+              {/* 标签编辑 */}
+              <div>
+                <label className="text-xs font-medium text-gray-500 block mb-2">标签 <span className="text-gray-400 font-normal">(可选，最多 10 个)</span></label>
+
+                {/* 标签列表 */}
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {tags.map((tag, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-700 text-sm rounded-lg group"
+                      >
+                        #{tag}
+                        <button
+                          type="button"
+                          onClick={() => removeTag(tag)}
+                          className="ml-1 text-blue-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* 标签输入框 */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all pr-20"
+                    placeholder="输入标签后按回车添加"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    disabled={!canAddMore}
+                  />
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                    <span className="text-xs text-gray-400">
+                      {tags.length}/{MAX_TAGS}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => addTag(tagInput)}
+                      disabled={!tagInput.trim() || !canAddMore}
+                      className="px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      添加
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           ) : (
-            <div className="bg-gray-50 rounded-2xl p-4">
-              <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-                {prompt.content}
-              </p>
+            <div className="space-y-4">
+              <div className="bg-gray-50 rounded-2xl p-4">
+                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                  {prompt.content}
+                </p>
+              </div>
+
+              {/* 显示标签 */}
+              {prompt.tags && prompt.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {prompt.tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 text-sm rounded-lg"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -181,11 +296,69 @@ function DetailModal({ prompt, onClose, onCopy, onUpdate, categories, models, on
                   {new Date(prompt.createdAt).toLocaleDateString("zh-CN")}
                 </div>
               </div>
-              <CopyButton text={prompt.content} onCopy={() => onCopy(prompt.id)} size="lg" />
+              <div className="flex items-center gap-2">
+                {prompt.isPublishedToCommunity ? (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-600 text-xs font-medium rounded-lg border border-green-200">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>已发布到社区</span>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShowPublishModal(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-xs font-medium rounded-lg transition-all shadow-sm shadow-purple-200"
+                    title="发布到社区"
+                  >
+                    <CommunityIcon />
+                    <span>发布到社区</span>
+                  </button>
+                )}
+                <CopyButton text={prompt.content} onCopy={() => onCopy(prompt.id)} size="lg" />
+              </div>
             </div>
           </div>
         )}
       </div>
+
+      {/* Publish Modal */}
+      {showPublishModal && (
+        <PublishModal
+          prompt={prompt}
+          categories={categories}
+          onClose={() => setShowPublishModal(false)}
+          onSuccess={(communityPromptId) => {
+            setShowPublishModal(false);
+            // 更新 prompt 的发布状态
+            setPrompt(prev => ({ ...prev, isPublishedToCommunity: true }));
+            // 刷新列表以更新所有提示词的发布状态
+            if (onPublishSuccess) onPublishSuccess();
+            setAlertDialog({
+              isOpen: true,
+              title: "发布成功",
+              message: "您的提示词已成功发布到社区广场！",
+              type: "success"
+            });
+          }}
+          onError={(title, message) => {
+            setAlertDialog({
+              isOpen: true,
+              title,
+              message,
+              type: "error"
+            });
+          }}
+        />
+      )}
+
+      {/* Alert Dialog */}
+      <AlertDialog
+        isOpen={alertDialog.isOpen}
+        title={alertDialog.title}
+        message={alertDialog.message}
+        type={alertDialog.type}
+        onConfirm={() => setAlertDialog({ isOpen: false, title: "", message: "", type: "warning" })}
+      />
     </div>
   );
 }

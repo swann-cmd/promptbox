@@ -2,12 +2,12 @@ import { useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { DEFAULT_CATEGORIES } from "../../constants/categories";
 import { RATE_LIMIT_MS } from "../../constants/app";
-import { LogoIcon } from "../ui/icons";
+import { LogoIcon, CommunityIcon } from "../ui/icons";
 
 /**
  * 认证页面组件 - 处理登录和注册
  */
-function AuthPage({ onLogin }) {
+function AuthPage({ onLogin, onShowCommunity }) {
   const [tab, setTab] = useState("login");
   const [form, setForm] = useState({
     email: "",
@@ -159,6 +159,18 @@ function AuthPage({ onLogin }) {
           </div>
           <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">PromptBox</h1>
           <p className="text-sm text-gray-400 mt-1">你的 AI 提示词库</p>
+        </div>
+
+        {/* Community Entry Button */}
+        <div className="absolute top-0 right-0">
+          <button
+            onClick={onShowCommunity}
+            className="flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-xs font-semibold rounded-xl transition-colors shadow-sm shadow-purple-200"
+            title="社区广场"
+          >
+            <CommunityIcon />
+            <span>社区</span>
+          </button>
         </div>
 
         {/* Card */}

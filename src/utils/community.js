@@ -1,0 +1,194 @@
+import { supabase } from "../lib/supabase";
+
+/**
+ * Check if user is authenticated, redirect to login if not
+ */
+function requireAuth(user) {
+  if (!user) {
+    window.location.href = "/login";
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Copy a community prompt to user's library
+ */
+async function copyCommunityPrompt(communityPromptId) {
+  const { data, error } = await supabase.rpc("copy_community_prompt", {
+    p_community_prompt_id: communityPromptId,
+  });
+
+  if (error) throw error;
+
+  return data;
+}
+
+/**
+ * Increment view count for a community prompt
+ */
+async function incrementViewCount(communityPromptId) {
+  const { error } = await supabase.rpc("increment_view_count", {
+    p_community_prompt_id: communityPromptId,
+  });
+
+  if (error) throw error;
+}
+
+/**
+ * Toggle like on a community prompt
+ */
+async function toggleLike(communityPromptId) {
+  // Check authentication first
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    throw new Error("请先登录");
+  }
+
+  const { data, error } = await supabase.rpc("toggle_like", {
+    p_community_prompt_id: communityPromptId,
+  });
+
+  if (error) throw error;
+
+  return data;
+}
+
+/**
+ * Toggle favorite on a community prompt
+ */
+async function toggleFavorite(communityPromptId) {
+  // Check authentication first
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    throw new Error("请先登录");
+  }
+
+  const { data, error } = await supabase.rpc("toggle_favorite", {
+    p_community_prompt_id: communityPromptId,
+  });
+
+  if (error) throw error;
+
+  return data;
+}
+
+/**
+ * Format prompt data from Supabase to app format
+ */
+function formatPromptData(data, publishedPromptIds = new Set()) {
+  return (data || []).map((p) => ({
+    id: p.id,
+    title: p.title,
+    content: p.content,
+    categoryId: p.category_id,
+    categoryName: p.categories?.name,
+    categorySlug: p.categories?.slug,
+    model: p.model,
+    tags: p.tags || [],
+    usageCount: p.usage_count,
+    createdAt: p.created_at,
+    isPublishedToCommunity: publishedPromptIds.has(p.id),
+  }));
+}
+
+/**
+ * Validate tag format (prevent XSS)
+ */
+function validateTag(tag) {
+  if (typeof tag !== 'string') return false;
+  if (tag.length === 0 || tag.length > 50) return false;
+  // Only allow alphanumeric, Chinese characters, underscores, and hyphens
+  return /^[a-zA-Z0-9\u4e00-\u9fa5_-]+$/.test(tag);
+}
+
+/**
+ * Format and validate tags array
+ */
+function formatTags(tags) {
+  if (!Array.isArray(tags)) return [];
+  return tags.filter(validateTag);
+}
+
+/**
+ * Format community prompt data
+ */
+function formatCommunityPromptData(data) {
+  return (data || []).map((p) => ({
+    id: p.id,
+    title: p.title,
+    content: p.content,
+    category_name: p.category_name,
+    category_slug: p.category_slug,
+    model: p.model,
+    description: p.description,
+    tags: formatTags(p.tags),
+    view_count: p.view_count || 0,
+    copy_count: p.copy_count || 0,
+    like_count: p.like_count || 0,
+    is_liked: false,
+    is_favorited: false,
+    user_id: p.user_id,
+    user_display_name: null,
+    published_at: p.published_at,
+    created_at: p.created_at,
+  }));
+}
+
+/**
+ * Fetch user interactions (likes and favorites)
+ * Optimized version using combined database function
+ */
+async function fetchUserInteractions(userId) {
+  try {
+    // Try to use the optimized function first
+    const { data, error } = await supabase.rpc("get_user_interactions_optimized", {
+      p_user_id: userId,
+    });
+
+    if (!error && data) {
+      return {
+        likedIds: new Set(data.likedIds || []),
+        favoritedIds: new Set(data.favoritedIds || []),
+      };
+    }
+  } catch (err) {
+    // Fall back to individual queries if optimized function doesn't exist
+    console.warn("Optimized function not available, using fallback:", err);
+  }
+
+  // Fallback to individual queries
+  const [likesResult, favoritesResult] = await Promise.all([
+    supabase
+      .from("community_likes")
+      .select("community_prompt_id")
+      .eq("user_id", userId),
+    supabase
+      .from("community_favorites")
+      .select("community_prompt_id")
+      .eq("user_id", userId),
+  ]);
+
+  const likedIds = new Set(
+    likesResult.error ? [] : (likesResult.data || []).map((l) => l.community_prompt_id)
+  );
+
+  const favoritedIds = new Set(
+    favoritesResult.error ? [] : (favoritesResult.data || []).map((f) => f.community_prompt_id)
+  );
+
+  return { likedIds, favoritedIds };
+}
+
+export {
+  requireAuth,
+  copyCommunityPrompt,
+  incrementViewCount,
+  toggleLike,
+  toggleFavorite,
+  formatPromptData,
+  formatCommunityPromptData,
+  fetchUserInteractions,
+  validateTag,
+  formatTags,
+};

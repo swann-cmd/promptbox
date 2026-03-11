@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "./lib/supabase";
 
 // Components
@@ -10,19 +10,22 @@ import ImportModal from "./components/prompts/ImportModal";
 import ExportModal from "./components/prompts/ExportModal";
 import AlertDialog from "./components/ui/dialogs/AlertDialog";
 import ConfirmDialog from "./components/ui/dialogs/ConfirmDialog";
+import CommunityPage from "./components/community/CommunityPage";
+import ErrorBoundary from "./components/ui/ErrorBoundary";
 
 // Constants & Utilities
 import { DEFAULT_CATEGORIES, CATEGORY_COLORS } from "./constants/categories";
 import { MODELS, APP_FONT } from "./constants/app";
 import { validatePrompt } from "./utils/validation";
 import { sanitizeInput } from "./utils/sanitize";
+import { formatPromptData } from "./utils/community";
 
 // Icons
-import { LogoIcon, CloseIcon, PlusIcon, UploadIcon, DownloadIcon, SearchIcon, LoadingSpinner, EmptyStateIcon } from "./components/ui/icons";
+import { LogoIcon, CloseIcon, PlusIcon, UploadIcon, DownloadIcon, SearchIcon, LoadingSpinner, EmptyStateIcon, CommunityIcon } from "./components/ui/icons";
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
 
-function MainApp({ user, onLogout }) {
+function MainApp({ user, onLogout, onShowCommunity, onShowAlert }) {
   const [prompts, setPrompts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,7 +36,6 @@ function MainApp({ user, onLogout }) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [detailPrompt, setDetailPrompt] = useState(null);
-  const [alertDialog, setAlertDialog] = useState({ isOpen: false, title: "", message: "" });
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: "", message: "", onConfirm: null });
   const [showExportModal, setShowExportModal] = useState(false);
 
@@ -128,19 +130,19 @@ function MainApp({ user, onLogout }) {
 
       if (error) throw error;
 
-      const formattedData = (data || []).map(p => ({
-        id: p.id,
-        title: p.title,
-        content: p.content,
-        categoryId: p.category_id,
-        categoryName: p.categories?.name,
-        categorySlug: p.categories?.slug,
-        model: p.model,
-        usageCount: p.usage_count,
-        createdAt: p.created_at
-      }));
+      // 查询已发布的社区提示词
+      const { data: communityData, error: communityError } = await supabase
+        .from("community_prompts")
+        .select("prompt_id, status")
+        .eq("user_id", user.id)
+        .eq("status", "published");
 
-      setPrompts(formattedData);
+      let publishedPromptIds = new Set();
+      if (!communityError && communityData) {
+        publishedPromptIds = new Set(communityData.map(cp => cp.prompt_id));
+      }
+
+      setPrompts(formatPromptData(data, publishedPromptIds));
     } catch (error) {
       console.error("加载 prompts 失败:", error);
       setError(error.message);
@@ -173,6 +175,10 @@ function MainApp({ user, onLogout }) {
 
       const sanitizedTitle = sanitizeInput(form.title, 200);
       const sanitizedContent = sanitizeInput(form.content, 10000);
+      const sanitizedTags = (form.tags || [])
+        .map(tag => sanitizeInput(tag.trim(), 50))
+        .filter(tag => tag.length > 0)
+        .slice(0, 10);
 
       const { error } = await supabase
         .from("prompts")
@@ -182,6 +188,7 @@ function MainApp({ user, onLogout }) {
           content: sanitizedContent,
           category_id: form.categoryId,
           model: form.model,
+          tags: sanitizedTags.length > 0 ? sanitizedTags : null,
           usage_count: 0
         })
         .select()
@@ -202,6 +209,10 @@ function MainApp({ user, onLogout }) {
 
       const sanitizedTitle = sanitizeInput(form.title, 200);
       const sanitizedContent = sanitizeInput(form.content, 10000);
+      const sanitizedTags = (form.tags || [])
+        .map(tag => sanitizeInput(tag.trim(), 50))
+        .filter(tag => tag.length > 0)
+        .slice(0, 10);
 
       const { data, error } = await supabase
         .from("prompts")
@@ -210,6 +221,7 @@ function MainApp({ user, onLogout }) {
           content: sanitizedContent,
           category_id: form.categoryId,
           model: form.model,
+          tags: sanitizedTags.length > 0 ? sanitizedTags : null,
         })
         .eq("id", id)
         .select(`
@@ -220,6 +232,9 @@ function MainApp({ user, onLogout }) {
 
       if (error) throw error;
 
+      // 保留原有的发布状态
+      const existingPrompt = prompts.find(p => p.id === id);
+
       const updatedPrompt = {
         id: data.id,
         title: data.title,
@@ -228,8 +243,10 @@ function MainApp({ user, onLogout }) {
         categoryName: data.categories?.name,
         categorySlug: data.categories?.slug,
         model: data.model,
+        tags: data.tags || [],
         usageCount: data.usage_count,
-        createdAt: data.created_at
+        createdAt: data.created_at,
+        isPublishedToCommunity: existingPrompt?.isPublishedToCommunity || false
       };
 
       setPrompts(prev => prev.map(p => p.id === id ? updatedPrompt : p));
@@ -259,7 +276,7 @@ function MainApp({ user, onLogout }) {
         } catch (error) {
           console.error("删除失败:", error);
           setConfirmDialog({ isOpen: false, title: "", message: "", onConfirm: null });
-          setAlertDialog({ isOpen: true, title: "删除失败", message: error.message });
+          onShowAlert("删除失败", error.message);
         }
       }
     });
@@ -334,6 +351,7 @@ function MainApp({ user, onLogout }) {
   const totalCount = prompts.reduce((a, p) => a + p.usageCount, 0);
 
   return (
+    <>
     <div className="min-h-screen bg-gray-50" style={APP_FONT}>
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-xl border-b border-gray-100 sticky top-0 z-40">
@@ -371,6 +389,14 @@ function MainApp({ user, onLogout }) {
             >
               <DownloadIcon />
               <span className="hidden sm:inline">导出</span>
+            </button>
+            <button
+              onClick={onShowCommunity}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-xs font-semibold rounded-xl transition-colors shadow-sm shadow-purple-200"
+              title="社区广场"
+            >
+              <CommunityIcon />
+              <span className="hidden sm:inline">社区</span>
             </button>
             <div className="flex items-center gap-2 pl-2 sm:pl-3 border-l border-gray-100">
               <div className="w-8 h-8 sm:w-7 sm:h-7 rounded-full bg-blue-100 flex items-center justify-center aspect-square">
@@ -497,7 +523,7 @@ function MainApp({ user, onLogout }) {
           onClose={() => setShowImportModal(false)}
           onImport={handleImport}
           categories={categories}
-          onError={(title, message) => setAlertDialog({ isOpen: true, title, message })}
+          onError={onShowAlert}
         />
       )}
       {showExportModal && (
@@ -505,29 +531,25 @@ function MainApp({ user, onLogout }) {
           onClose={() => setShowExportModal(false)}
           prompts={prompts}
           categories={categories}
-          onError={(title, message) => setAlertDialog({ isOpen: true, title, message })}
+          onError={onShowAlert}
         />
       )}
       {detailPrompt && (
         <DetailModal
           key={detailPrompt.id}
           prompt={detailPrompt}
+          user={user}
           onClose={() => setDetailPrompt(null)}
           onCopy={(id) => { handleCopy(id); }}
           onUpdate={handleUpdate}
+          onPublishSuccess={fetchPrompts}
           categories={categories}
           models={MODELS}
-          onError={(title, message) => setAlertDialog({ isOpen: true, title, message })}
+          onError={onShowAlert}
         />
       )}
 
       {/* Dialogs */}
-      <AlertDialog
-        isOpen={alertDialog.isOpen}
-        title={alertDialog.title}
-        message={alertDialog.message}
-        onConfirm={() => setAlertDialog({ isOpen: false, title: "", message: "" })}
-      />
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         title={confirmDialog.title}
@@ -536,6 +558,7 @@ function MainApp({ user, onLogout }) {
         onCancel={() => setConfirmDialog({ isOpen: false, title: "", message: "", onConfirm: null })}
       />
     </div>
+  </>
   );
 }
 
@@ -544,6 +567,13 @@ function MainApp({ user, onLogout }) {
 export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showCommunity, setShowCommunity] = useState(false);
+  const [alertDialog, setAlertDialog] = useState({ isOpen: false, title: "", message: "" });
+
+  // Stable callback for showing alerts
+  const onShowAlert = useCallback((title, message) => {
+    setAlertDialog({ isOpen: true, title, message });
+  }, []);
 
   useEffect(() => {
     // 检查当前会话
@@ -582,6 +612,37 @@ export default function App() {
     );
   }
 
-  if (!user) return <AuthPage onLogin={setUser} />;
-  return <MainApp user={user} onLogout={() => setUser(null)} />;
+  return (
+    <>
+      {/* Community Page - render at root level so it works for both logged in and logged out users */}
+      {showCommunity && (
+        <CommunityPage
+          user={user}
+          onClose={() => setShowCommunity(false)}
+          onError={onShowAlert}
+        />
+      )}
+
+      {/* Alert Dialog */}
+      <AlertDialog
+        isOpen={alertDialog.isOpen}
+        title={alertDialog.title}
+        message={alertDialog.message}
+        onConfirm={() => setAlertDialog({ isOpen: false, title: "", message: "" })}
+      />
+
+      {!user ? (
+        <AuthPage onLogin={setUser} onShowCommunity={() => setShowCommunity(true)} />
+      ) : (
+        <ErrorBoundary>
+          <MainApp
+            user={user}
+            onLogout={() => setUser(null)}
+            onShowCommunity={() => setShowCommunity(true)}
+            onShowAlert={(title, message) => setAlertDialog({ isOpen: true, title, message })}
+          />
+        </ErrorBoundary>
+      )}
+    </>
+  );
 }
