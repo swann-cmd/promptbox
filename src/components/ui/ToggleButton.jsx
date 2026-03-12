@@ -1,5 +1,6 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
+import { getToggleButtonClasses } from "../../utils/sizeClasses";
 
 /**
  * 通用切换按钮组件
@@ -65,18 +66,7 @@ function ToggleButton({
     }
   };
 
-  const sizeClasses = {
-    sm: "w-7 h-7 text-xs",
-    sm_padding: "px-2 py-1 text-xs gap-1",
-    md: "w-8 h-8 text-sm",
-    md_padding: "px-2.5 py-1.5 text-xs gap-1.5",
-    lg: "w-9 h-9 text-base",
-    lg_padding: "px-3 py-1.5 text-sm gap-1.5"
-  };
-
-  const paddingClass = size === "sm" || size === "md" || size === "lg"
-    ? sizeClasses[`${size}_padding`]
-    : sizeClasses.md_padding;
+  const { container: containerSize, padding: paddingClass } = getToggleButtonClasses(size);
 
   return (
     <button
@@ -86,7 +76,7 @@ function ToggleButton({
         isActive
           ? colorClasses[activeColor].active
           : colorClasses[activeColor].inactive
-      } ${sizeClasses[size] || sizeClasses.md} ${paddingClass} ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+      } ${containerSize} ${paddingClass} ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
       title={title || (isActive ? "取消" : "确认")}
     >
       {activeIcon ? (

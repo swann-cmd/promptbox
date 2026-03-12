@@ -1,5 +1,6 @@
 import { memo, useState } from "react";
 import { UserIcon } from "../ui/icons";
+import { avatarSizeClasses } from "../../utils/sizeClasses";
 
 /**
  * User Avatar Component
@@ -8,14 +9,7 @@ import { UserIcon } from "../ui/icons";
 const UserAvatar = memo(({ src, alt, size = "md" }) => {
   const [imageError, setImageError] = useState(false);
 
-  // Size classes mapping
-  const sizeClasses = {
-    sm: "w-6 h-6 text-xs",      // 24px
-    md: "w-8 h-8 text-sm",      // 32px
-    lg: "w-12 h-12 text-base",  // 48px
-  };
-
-  const sizeClass = sizeClasses[size] || sizeClasses.md;
+  const sizeClass = avatarSizeClasses[size] || avatarSizeClasses.md;
 
   // Get first letter of display name for fallback
   const getInitial = () => {

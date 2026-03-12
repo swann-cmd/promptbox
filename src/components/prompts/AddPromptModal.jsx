@@ -3,6 +3,7 @@ import { MODELS } from "../../constants/app";
 import { PROMPT_TEMPLATES, getTemplatesByCategory, getTemplateCategories } from "../../constants/templates";
 import { CloseIcon, DocumentIcon } from "../ui/icons";
 import { sanitizeInput } from "../../utils/sanitize";
+import { useTagManager } from "../../hooks/useTagManager";
 
 /**
  * 添加提示词模态框组件（支持从模板创建）
@@ -22,33 +23,23 @@ function AddPromptModal({ onClose, onAdd, categories }) {
   });
   const [submitting, setSubmitting] = useState(false);
 
-  // 标签输入状态
-  const [tagInput, setTagInput] = useState("");
+  // 使用统一的标签管理 hook
+  const {
+    tags,
+    setTags,
+    tagInput,
+    setTagInput,
+    addTag,
+    removeTag,
+    handleKeyDown,
+    canAddMore,
+    remaining
+  } = useTagManager(form.tags);
 
-  // 添加标签
-  const handleAddTag = () => {
-    const newTag = tagInput.trim();
-    if (newTag && !form.tags.includes(newTag) && form.tags.length < 10) {
-      setForm({ ...form, tags: [...form.tags, newTag] });
-      setTagInput("");
-    }
-  };
-
-  // 删除标签
-  const handleRemoveTag = (tagToRemove) => {
-    setForm({ ...form, tags: form.tags.filter(tag => tag !== tagToRemove) });
-  };
-
-  // 标签输入键盘事件
-  const handleTagInputKeyDown = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleAddTag();
-    } else if (e.key === "Backspace" && !tagInput && form.tags.length > 0) {
-      // 删除最后一个标签
-      setForm({ ...form, tags: form.tags.slice(0, -1) });
-    }
-  };
+  // 同步 tags 到 form state
+  useEffect(() => {
+    setForm(prev => ({ ...prev, tags }));
+  }, [tags]);
 
   // 根据模板分类和搜索词筛选模板
   const filteredTemplates = useMemo(() => {
@@ -104,13 +95,15 @@ function AddPromptModal({ onClose, onAdd, categories }) {
                             categories[0];
 
     // 对模板内容进行安全清理，防止 XSS 攻击
+    const sanitizedTags = sanitizeInput(template.tags?.join(", ") || "", 500).split(",").map(t => t.trim()).filter(Boolean);
     setForm({
       title: sanitizeInput(template.title, 200),
       content: sanitizeInput(template.content, 10000),
       categoryId: matchedCategory?.id || "",
       model: template.model,
-      tags: template.tags || []
+      tags: sanitizedTags
     });
+    setTags(sanitizedTags);
     setMode("manual");
   };
 
@@ -124,6 +117,7 @@ function AddPromptModal({ onClose, onAdd, categories }) {
       model: "通用",
       tags: []
     });
+    setTags([]);
     setTagInput("");
     setMode("template");
   };
@@ -241,7 +235,7 @@ function AddPromptModal({ onClose, onAdd, categories }) {
 
             {/* 标签输入 */}
             <div>
-              <label className="text-xs font-medium text-gray-500 block mb-1.5">标签 <span className="text-gray-400 font-normal">(可选，最多 10 个)</span></label>
+              <label className="text-xs font-medium text-gray-500 block mb-1.5">标签 <span className="text-gray-400 font-normal">(可选，最多 {canAddMore ? remaining : 0} 个)</span></label>
 
               {/* 标签列表 */}
               {form.tags.length > 0 && (
@@ -254,7 +248,7 @@ function AddPromptModal({ onClose, onAdd, categories }) {
                       #{tag}
                       <button
                         type="button"
-                        onClick={() => handleRemoveTag(tag)}
+                        onClick={() => removeTag(tag)}
                         className="ml-1 text-blue-400 hover:text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -274,8 +268,8 @@ function AddPromptModal({ onClose, onAdd, categories }) {
                   placeholder="输入标签后按回车添加"
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={handleTagInputKeyDown}
-                  disabled={form.tags.length >= 10}
+                  onKeyDown={handleKeyDown}
+                  disabled={!canAddMore}
                 />
                 <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                   <span className="text-xs text-gray-400">
@@ -283,8 +277,8 @@ function AddPromptModal({ onClose, onAdd, categories }) {
                   </span>
                   <button
                     type="button"
-                    onClick={handleAddTag}
-                    disabled={!tagInput.trim() || form.tags.length >= 10}
+                    onClick={() => addTag(tagInput)}
+                    disabled={!tagInput.trim() || !canAddMore}
                     className="px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     添加
