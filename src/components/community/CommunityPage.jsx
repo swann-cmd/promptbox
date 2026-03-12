@@ -12,7 +12,6 @@ import { COMMUNITY_PROMPTS_LIMIT, COMMUNITY_TAB } from "../../constants/communit
  */
 function CommunityPage({ user, onClose, onError, onShowUserProfile }) {
   const [prompts, setPrompts] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("latest");
   const [activeCategory, setActiveCategory] = useState("all");
@@ -150,8 +149,8 @@ function CommunityPage({ user, onClose, onError, onShowUserProfile }) {
     return filtered;
   }, [prompts, activeCategory, searchQuery]);
 
-  // 提取唯一分类
-  useEffect(() => {
+  // 提取唯一分类 - 优化为 useMemo 避免不必要的重新计算
+  const categories = useMemo(() => {
     const categoryMap = new Map();
     prompts.forEach((p) => {
       if (p.category_slug && !categoryMap.has(p.category_slug)) {
@@ -161,13 +160,14 @@ function CommunityPage({ user, onClose, onError, onShowUserProfile }) {
         });
       }
     });
-    setCategories(Array.from(categoryMap.values()));
+    return Array.from(categoryMap.values());
   }, [prompts]);
 
-  const allCategories = [
+  // 分类列表 - 使用 useMemo 避免每次渲染创建新数组
+  const allCategories = useMemo(() => [
     { slug: "all", name: "全部分类" },
     ...categories,
-  ];
+  ], [categories]);
 
   return (
     <div className="fixed inset-0 bg-gray-50 z-50 overflow-y-auto">

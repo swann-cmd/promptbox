@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import CategoryBadge from "../ui/CategoryBadge";
 import CopyButton from "../ui/CopyButton";
 import PublishModal from "../community/PublishModal";
@@ -362,5 +363,42 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
     </div>
   );
 }
+
+DetailModal.propTypes = {
+  prompt: PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    title: PropTypes.string.isRequired,
+    content: PropTypes.string.isRequired,
+    categoryId: PropTypes.string.isRequired,
+    categorySlug: PropTypes.string.isRequired,
+    categoryName: PropTypes.string.isRequired,
+    model: PropTypes.string.isRequired,
+    tags: PropTypes.arrayOf(PropTypes.string),
+    usageCount: PropTypes.number.isRequired,
+    createdAt: PropTypes.string.isRequired,
+    updatedAt: PropTypes.string.isRequired,
+    isPublishedToCommunity: PropTypes.bool,
+  }),
+  onClose: PropTypes.func.isRequired,
+  onCopy: PropTypes.func.isRequired,
+  onUpdate: PropTypes.func.isRequired,
+  onPublishSuccess: PropTypes.func,
+  categories: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    name: PropTypes.string.isRequired,
+    slug: PropTypes.string.isRequired,
+  })).isRequired,
+  models: PropTypes.arrayOf(PropTypes.string).isRequired,
+  onError: PropTypes.func.isRequired,
+  user: PropTypes.shape({
+    id: PropTypes.string,
+  }),
+};
+
+DetailModal.defaultProps = {
+  prompt: null,
+  onPublishSuccess: null,
+  user: null,
+};
 
 export default DetailModal;

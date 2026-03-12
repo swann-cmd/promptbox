@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import PropTypes from "prop-types";
 import CategoryBadge from "../ui/CategoryBadge";
 import CopyButton from "../ui/CopyButton";
 import LikeButton from "./LikeButton";
@@ -237,5 +238,42 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
     </>
   );
 }
+
+CommunityDetailModal.propTypes = {
+  prompt: PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    title: PropTypes.string.isRequired,
+    content: PropTypes.string.isRequired,
+    description: PropTypes.string,
+    category_slug: PropTypes.string.isRequired,
+    category_name: PropTypes.string.isRequired,
+    model: PropTypes.string.isRequired,
+    tags: PropTypes.arrayOf(PropTypes.string),
+    view_count: PropTypes.number,
+    copy_count: PropTypes.number,
+    like_count: PropTypes.number,
+    user_id: PropTypes.string.isRequired,
+    user_display_name: PropTypes.string,
+    user_avatar_url: PropTypes.string,
+    published_at: PropTypes.string.isRequired,
+  }).isRequired,
+  user: PropTypes.shape({
+    id: PropTypes.string,
+  }),
+  userLikes: PropTypes.instanceOf(Set).isRequired,
+  userFavorites: PropTypes.instanceOf(Set).isRequired,
+  onClose: PropTypes.func.isRequired,
+  onError: PropTypes.func.isRequired,
+  onCopy: PropTypes.func,
+  onWithdraw: PropTypes.func,
+  onShowUserProfile: PropTypes.func,
+};
+
+CommunityDetailModal.defaultProps = {
+  user: null,
+  onCopy: null,
+  onWithdraw: null,
+  onShowUserProfile: null,
+};
 
 export default CommunityDetailModal;

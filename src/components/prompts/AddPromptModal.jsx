@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import PropTypes from "prop-types";
 import { MODELS } from "../../constants/app";
 import { PROMPT_TEMPLATES, getTemplatesByCategory, getTemplateCategories } from "../../constants/templates";
 import { CloseIcon, DocumentIcon } from "../ui/icons";
@@ -390,5 +391,15 @@ function AddPromptModal({ onClose, onAdd, categories }) {
     </div>
   );
 }
+
+AddPromptModal.propTypes = {
+  onClose: PropTypes.func.isRequired,
+  onAdd: PropTypes.func.isRequired,
+  categories: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    name: PropTypes.string.isRequired,
+    slug: PropTypes.string.isRequired,
+  })).isRequired,
+};
 
 export default AddPromptModal;
