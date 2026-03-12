@@ -60,7 +60,12 @@ function CommunityPage({ user, onClose, onError, onShowUserProfile }) {
 
           if (profiles) {
             profilesMap = profiles.reduce((acc, profile) => {
-              acc[profile.user_id] = profile;
+              // 只保留需要的字段，避免 id 冲突
+              acc[profile.user_id] = {
+                user_id: profile.user_id,
+                display_name: profile.display_name,
+                avatar_url: profile.avatar_url
+              };
               return acc;
             }, {});
           }
@@ -169,7 +174,12 @@ function CommunityPage({ user, onClose, onError, onShowUserProfile }) {
 
         if (profiles) {
           profilesMap = profiles.reduce((acc, profile) => {
-            acc[profile.user_id] = profile;
+            // 只保留需要的字段，避免 id 冲突
+            acc[profile.user_id] = {
+              user_id: profile.user_id,
+              display_name: profile.display_name,
+              avatar_url: profile.avatar_url
+            };
             return acc;
           }, {});
         }
