@@ -33,11 +33,9 @@ function useTagManager(initialTags = []) {
     }
   };
 
-  const setTagsDirectly = setTags;
-
   return {
     tags,
-    setTags: setTagsDirectly,
+    setTags,
     tagInput,
     setTagInput,
     addTag,

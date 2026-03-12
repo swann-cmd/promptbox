@@ -164,11 +164,6 @@ function CommunityPage({ user, onClose, onError, onShowUserProfile }) {
     setCategories(Array.from(categoryMap.values()));
   }, [prompts]);
 
-  const counts = useMemo(() => ({
-    latest: prompts.length,
-    popular: prompts.length,
-  }), [prompts]);
-
   const allCategories = [
     { slug: "all", name: "全部分类" },
     ...categories,

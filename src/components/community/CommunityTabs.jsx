@@ -3,7 +3,7 @@ import { FireIcon, ClockIcon } from "../ui/icons";
 /**
  * 社区 Tab 切换组件
  */
-function CommunityTabs({ activeTab, onChange, counts }) {
+function CommunityTabs({ activeTab, onChange }) {
   return (
     <div className="flex items-center gap-2 mb-5">
       <button
