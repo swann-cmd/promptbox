@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test-env": "./test-env.sh",
+    "setup-test-env": "./setup-test-env.sh"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.48.1",

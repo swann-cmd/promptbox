@@ -1,0 +1,6 @@
+#!/bin/bash
+# Git post-commit hook - 自动启动测试环境
+
+echo "📝 代码已提交"
+echo "💡 启动测试环境请运行: npm run test-env"
+echo "🌐 测试地址: http://localhost:5173"
