@@ -127,23 +127,34 @@ function CommunityPage({ user, onClose, onError, onShowUserProfile }) {
     }
   }, [user, loadUserInteractions]);
 
-  // 过滤逻辑 - 使用 useMemo 优化性能
+  // 过滤逻辑 - 使用 useMemo 优化性能，避免重复的 toLowerCase 调用
   const filteredPrompts = useMemo(() => {
     let filtered = prompts;
 
+    // 分类过滤（快速）
     if (activeCategory !== "all") {
       filtered = filtered.filter((p) => p.category_slug === activeCategory);
     }
 
+    // 搜索过滤（只在有搜索词时执行）
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (p) =>
-          p.title.toLowerCase().includes(query) ||
-          p.content.toLowerCase().includes(query) ||
-          p.description?.toLowerCase().includes(query) ||
-          p.tags?.some((tag) => tag.toLowerCase().includes(query))
-      );
+      filtered = filtered.filter((p) => {
+        // 快速检查：title 和 description 较短，优先检查
+        const titleMatch = p.title.toLowerCase().includes(query);
+        if (titleMatch) return true;
+
+        const descMatch = p.description?.toLowerCase().includes(query);
+        if (descMatch) return true;
+
+        // tags 检查（如果有）
+        if (p.tags && p.tags.length > 0) {
+          return p.tags.some((tag) => tag.toLowerCase().includes(query));
+        }
+
+        // 最后检查 content（可能较长）
+        return p.content.toLowerCase().includes(query);
+      });
     }
 
     return filtered;

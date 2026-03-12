@@ -1,29 +1,44 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { supabase } from "./lib/supabase";
 
-// Components
+// Components - 使用 barrel exports 简化导入
 import AuthPage from "./components/auth/AuthPage";
-import PromptCard from "./components/prompts/PromptCard";
-import DetailModal from "./components/prompts/DetailModal";
-import AddPromptModal from "./components/prompts/AddPromptModal";
-import ImportModal from "./components/prompts/ImportModal";
-import ExportModal from "./components/prompts/ExportModal";
-import AlertDialog from "./components/ui/dialogs/AlertDialog";
-import ConfirmDialog from "./components/ui/dialogs/ConfirmDialog";
-// 所有社区和用户档案组件已恢复
-import CommunityPage from "./components/community/CommunityPage";
-import UserProfilePage from "./components/user/UserProfilePage";
-import UserProfileModal from "./components/user/UserProfileModal";
-import ErrorBoundary from "./components/ui/ErrorBoundary";
+import {
+  PromptCard,
+  AddPromptModal,
+  DetailModal,
+  ImportModal,
+  ExportModal
+} from "./components/prompts";
+import {
+  AlertDialog,
+  ConfirmDialog,
+  ErrorBoundary
+} from "./components/ui";
+import {
+  CommunityPage
+} from "./components/community";
+import {
+  UserProfilePage,
+  UserProfileModal
+} from "./components/user";
+import {
+  LogoIcon,
+  CloseIcon,
+  PlusIcon,
+  UploadIcon,
+  DownloadIcon,
+  SearchIcon,
+  LoadingSpinner,
+  EmptyStateIcon,
+  CommunityIcon
+} from "./components/ui/icons";
 
 // Constants & Utilities
 import { DEFAULT_CATEGORIES } from "./constants/categories";
 import { MODELS, APP_FONT } from "./constants/app";
 import { validatePrompt, sanitizeInput } from "./utils/sanitize";
 import { formatPromptData, getOrCreateUserProfile } from "./utils/community";
-
-// Icons
-import { LogoIcon, CloseIcon, PlusIcon, UploadIcon, DownloadIcon, SearchIcon, LoadingSpinner, EmptyStateIcon, CommunityIcon } from "./components/ui/icons";
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
 
