@@ -40,6 +40,7 @@ function UserProfilePage({ userId, currentUser, onClose, onError }) {
 
       setPrompts((promptsData || []).map(p => ({
         ...p,
+        id: p.prompt_id,  // 使用明确的 prompt_id 字段
         is_liked: false,
         is_favorited: false,
       })));
