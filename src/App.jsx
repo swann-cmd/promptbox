@@ -21,7 +21,7 @@ import { DEFAULT_CATEGORIES } from "./constants/categories";
 import { MODELS, APP_FONT } from "./constants/app";
 import { validatePrompt } from "./utils/validation";
 import { sanitizeInput } from "./utils/sanitize";
-import { formatPromptData } from "./utils/community";
+import { formatPromptData, getOrCreateUserProfile } from "./utils/community";
 
 // Icons
 import { LogoIcon, CloseIcon, PlusIcon, UploadIcon, DownloadIcon, SearchIcon, LoadingSpinner, EmptyStateIcon, CommunityIcon } from "./components/ui/icons";
@@ -185,14 +185,14 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
     if (user) fetchPrompts();
   }, [user]);
 
-  // 加载用户档案 - 暂时禁用以诊断问题
-  // useEffect(() => {
-  //   if (user && !userProfile) {
-  //     getOrCreateUserProfile(user.id).then(setUserProfile).catch(err => {
-  //       console.error('加载用户档案失败:', err);
-  //     });
-  //   }
-  // }, [user, userProfile]);
+  // 加载用户档案
+  useEffect(() => {
+    if (user && !userProfile) {
+      getOrCreateUserProfile(user.id).then(setUserProfile).catch(err => {
+        console.error('加载用户档案失败:', err);
+      });
+    }
+  }, [user, userProfile]);
 
   // 监听认证状态变化
   useEffect(() => {
