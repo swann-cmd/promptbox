@@ -2,7 +2,8 @@ import { useState } from "react";
 import CategoryBadge from "../ui/CategoryBadge";
 import LikeButton from "./LikeButton";
 import FavoriteButton from "./FavoriteButton";
-import { ViewIcon, CopySmallIcon, UserIcon, DateIcon } from "../ui/icons";
+import UserAvatar from "../user/UserAvatar";
+import { ViewIcon, CopySmallIcon, DateIcon } from "../ui/icons";
 import { copyCommunityPrompt, incrementViewCount } from "../../utils/community";
 
 /**
@@ -16,6 +17,7 @@ function CommunityPromptCard({
   onError,
   onLikeChange,
   onFavoriteChange,
+  onShowUserProfile,
 }) {
   const [copying, setCopying] = useState(false);
 
@@ -104,14 +106,22 @@ function CommunityPromptCard({
       <div className="flex items-center justify-between pt-3 border-t border-gray-50">
         <div className="flex items-center gap-3">
           {/* Author */}
-          <div className="flex items-center gap-1.5 text-xs text-gray-400">
-            <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
-              <UserIcon />
-            </div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (onShowUserProfile) onShowUserProfile(prompt.user_id);
+            }}
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <UserAvatar
+              src={prompt.user_avatar_url}
+              alt={prompt.user_display_name}
+              size="sm"
+            />
             <span className="max-w-[80px] truncate">
               {prompt.user_display_name || "匿名用户"}
             </span>
-          </div>
+          </button>
 
           {/* Stats */}
           <div className="flex items-center gap-1.5 text-xs text-gray-400">

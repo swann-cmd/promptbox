@@ -148,7 +148,8 @@ function formatCommunityPromptData(data) {
     is_liked: false,
     is_favorited: false,
     user_id: p.user_id,
-    user_display_name: null,
+    user_display_name: p.user_display_name || p.user_profiles?.display_name || null,
+    user_avatar_url: p.user_avatar_url || p.user_profiles?.avatar_url || null,
     published_at: p.published_at,
     created_at: p.created_at,
   }));
@@ -199,6 +200,65 @@ async function fetchUserInteractions(userId) {
   return { likedIds, favoritedIds };
 }
 
+/**
+ * Get or create user profile
+ */
+async function getOrCreateUserProfile(userId) {
+  const { data, error } = await supabase.rpc('get_or_create_user_profile', {
+    p_user_id: userId,
+  });
+
+  if (error) throw error;
+
+  // Return the first row if data exists
+  return data && data.length > 0 ? data[0] : null;
+}
+
+/**
+ * Update user profile
+ */
+async function updateUserProfile({ displayName, bio, avatarUrl }) {
+  const { data, error } = await supabase.rpc('update_user_profile', {
+    p_display_name: displayName || null,
+    p_bio: bio || null,
+    p_avatar_url: avatarUrl || null,
+  });
+
+  if (error) throw error;
+
+  // Return the first row if data exists
+  return data && data.length > 0 ? data[0] : null;
+}
+
+/**
+ * Get user profile statistics
+ */
+async function getUserProfileStats(userId) {
+  const { data, error } = await supabase.rpc('get_user_profile_stats', {
+    p_user_id: userId,
+  });
+
+  if (error) throw error;
+
+  // Return the first row if data exists
+  return data && data.length > 0 ? data[0] : null;
+}
+
+/**
+ * Get user's published prompts
+ */
+async function getUserPrompts(userId, limit = 50, offset = 0) {
+  const { data, error } = await supabase.rpc('get_user_prompts', {
+    p_user_id: userId,
+    p_limit: limit,
+    p_offset: offset,
+  });
+
+  if (error) throw error;
+
+  return data || [];
+}
+
 export {
   requireAuth,
   copyCommunityPrompt,
@@ -211,4 +271,8 @@ export {
   fetchUserInteractions,
   validateTag,
   formatTags,
+  getOrCreateUserProfile,
+  updateUserProfile,
+  getUserProfileStats,
+  getUserPrompts,
 };

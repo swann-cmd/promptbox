@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "../../lib/supabase";
 import CommunityPromptCard from "./CommunityPromptCard";
 import CommunityTabs from "./CommunityTabs";
@@ -10,7 +10,7 @@ import { COMMUNITY_PROMPTS_LIMIT, COMMUNITY_TAB } from "../../constants/communit
 /**
  * 社区广场主页面
  */
-function CommunityPage({ user, onClose, onError }) {
+function CommunityPage({ user, onClose, onError, onShowUserProfile }) {
   const [prompts, setPrompts] = useState([]);
   const [filteredPrompts, setFilteredPrompts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -47,8 +47,33 @@ function CommunityPage({ user, onClose, onError }) {
 
         if (error) throw error;
 
+        // 获取所有唯一的 user_id
+        const userIds = [...new Set(data.map(p => p.user_id))];
+
+        // 批量获取用户档案
+        let profilesMap = {};
+        if (userIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from("user_profiles")
+            .select("user_id, display_name, avatar_url")
+            .in("user_id", userIds);
+
+          if (profiles) {
+            profilesMap = profiles.reduce((acc, profile) => {
+              acc[profile.user_id] = profile;
+              return acc;
+            }, {});
+          }
+        }
+
+        // 合并用户档案数据
+        const dataWithProfiles = data.map(p => ({
+          ...p,
+          user_profiles: profilesMap[p.user_id] || null
+        }));
+
         if (!aborted) {
-          setPrompts(formatCommunityPromptData(data));
+          setPrompts(formatCommunityPromptData(dataWithProfiles));
         }
       } catch (error) {
         console.error("加载社区提示词失败:", error);
@@ -131,7 +156,32 @@ function CommunityPage({ user, onClose, onError }) {
 
       if (error) throw error;
 
-      setPrompts(formatCommunityPromptData(data));
+      // 获取所有唯一的 user_id
+      const userIds = [...new Set(data.map(p => p.user_id))];
+
+      // 批量获取用户档案
+      let profilesMap = {};
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("user_profiles")
+          .select("user_id, display_name, avatar_url")
+          .in("user_id", userIds);
+
+        if (profiles) {
+          profilesMap = profiles.reduce((acc, profile) => {
+            acc[profile.user_id] = profile;
+            return acc;
+          }, {});
+        }
+      }
+
+      // 合并用户档案数据
+      const dataWithProfiles = data.map(p => ({
+        ...p,
+        user_profiles: profilesMap[p.user_id] || null
+      }));
+
+      setPrompts(formatCommunityPromptData(dataWithProfiles));
     } catch (error) {
       console.error("加载社区提示词失败:", error);
       if (onError) onError("加载失败", error.message);
@@ -152,28 +202,23 @@ function CommunityPage({ user, onClose, onError }) {
     }
   };
 
-  const handleLikeChange = ({ isLiked, likeCount }) => {
-    // Update the specific prompt's state
-    setPrompts(prev => prev.map(p => {
-      if (userLikes.has(p.id) === isLiked && p.like_count === likeCount) {
-        return p;
-      }
-      return {
-        ...p,
-        like_count: likeCount
-      };
-    }));
-  };
+  const handleLikeChange = useCallback(({ communityPromptId, isLiked, likeCount }) => {
+    setPrompts(prev => prev.map(p =>
+      p.id === communityPromptId ? { ...p, like_count: likeCount } : p
+    ));
+  }, []);
 
-  const handleFavoriteChange = ({ isFavorited }) => {
-    // Update user favorites state
-    if (isFavorited) {
-      setUserFavorites(prev => new Set(prev));
-    } else {
-      // Need to refetch to get accurate state
-      loadUserInteractions();
-    }
-  };
+  const handleFavoriteChange = useCallback(({ communityPromptId, isFavorited }) => {
+    setUserFavorites(prev => {
+      const newSet = new Set(prev);
+      if (isFavorited) {
+        newSet.add(communityPromptId);
+      } else {
+        newSet.delete(communityPromptId);
+      }
+      return newSet;
+    });
+  }, []);
 
   const counts = useMemo(() => ({
     latest: prompts.length,
@@ -275,6 +320,7 @@ function CommunityPage({ user, onClose, onError }) {
                 onError={onError}
                 onLikeChange={handleLikeChange}
                 onFavoriteChange={handleFavoriteChange}
+                onShowUserProfile={onShowUserProfile}
               />
             ))}
           </div>
@@ -319,6 +365,7 @@ function CommunityPage({ user, onClose, onError }) {
             // 刷新列表
             fetchCommunityPrompts();
           }}
+          onShowUserProfile={onShowUserProfile}
         />
       )}
     </div>

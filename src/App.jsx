@@ -11,6 +11,8 @@ import ExportModal from "./components/prompts/ExportModal";
 import AlertDialog from "./components/ui/dialogs/AlertDialog";
 import ConfirmDialog from "./components/ui/dialogs/ConfirmDialog";
 import CommunityPage from "./components/community/CommunityPage";
+import UserProfileModal from "./components/user/UserProfileModal";
+import UserProfilePage from "./components/user/UserProfilePage";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
 
 // Constants & Utilities
@@ -18,14 +20,14 @@ import { DEFAULT_CATEGORIES, CATEGORY_COLORS } from "./constants/categories";
 import { MODELS, APP_FONT } from "./constants/app";
 import { validatePrompt } from "./utils/validation";
 import { sanitizeInput } from "./utils/sanitize";
-import { formatPromptData } from "./utils/community";
+import { formatPromptData, getOrCreateUserProfile } from "./utils/community";
 
 // Icons
 import { LogoIcon, CloseIcon, PlusIcon, UploadIcon, DownloadIcon, SearchIcon, LoadingSpinner, EmptyStateIcon, CommunityIcon } from "./components/ui/icons";
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
 
-function MainApp({ user, onLogout, onShowCommunity, onShowAlert }) {
+function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity, onShowAlert, onShowProfileModal }) {
   const [prompts, setPrompts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -48,6 +50,22 @@ function MainApp({ user, onLogout, onShowCommunity, onShowAlert }) {
   useEffect(() => {
     if (user) fetchPrompts();
   }, [user]);
+
+  // 加载用户档案
+  useEffect(() => {
+    if (user && !userProfile) {
+      loadUserProfile();
+    }
+  }, [user]);
+
+  const loadUserProfile = async () => {
+    try {
+      const profile = await getOrCreateUserProfile(user.id);
+      setUserProfile(profile);
+    } catch (error) {
+      console.error('加载用户档案失败:', error);
+    }
+  };
 
   // 监听认证状态变化
   useEffect(() => {
@@ -438,17 +456,23 @@ function MainApp({ user, onLogout, onShowCommunity, onShowAlert }) {
               <span className="hidden sm:inline">社区</span>
             </button>
             <div className="flex items-center gap-2 pl-2 sm:pl-3 border-l border-gray-100">
-              <div className="w-8 h-8 sm:w-7 sm:h-7 rounded-full bg-blue-100 flex items-center justify-center aspect-square">
-                <span className="text-xs font-semibold text-blue-600">
-                  {user.name?.[0]?.toUpperCase() || "U"}
+              <button
+                onClick={onShowProfileModal}
+                className="flex items-center gap-2 hover:bg-gray-50 rounded-full pr-2 pl-1 py-0.5 -ml-1 transition-colors"
+                title="编辑个人资料"
+              >
+                <div className="w-8 h-8 sm:w-7 sm:h-7 rounded-full bg-blue-100 flex items-center justify-center aspect-square">
+                  <span className="text-xs font-semibold text-blue-600">
+                    {userProfile?.display_name?.[0]?.toUpperCase() || user.name?.[0]?.toUpperCase() || "U"}
+                  </span>
+                </div>
+                <span className="text-xs text-gray-600 font-medium hidden sm:block">
+                  {userProfile?.display_name || user.name || user.email}
                 </span>
-              </div>
-              <span className="text-xs text-gray-600 font-medium hidden sm:block">
-                {user.name || user.email}
-              </span>
+              </button>
               <button
                 onClick={handleLogout}
-                className="text-xs text-gray-400 hover:text-gray-600 transition-colors ml-1"
+                className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
               >
                 退出
               </button>
@@ -605,9 +629,12 @@ function MainApp({ user, onLogout, onShowCommunity, onShowAlert }) {
 
 export default function App() {
   const [user, setUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showCommunity, setShowCommunity] = useState(false);
   const [alertDialog, setAlertDialog] = useState({ isOpen: false, title: "", message: "" });
+  const [selectedUserId, setSelectedUserId] = useState(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   // Stable callback for showing alerts
   const onShowAlert = useCallback((title, message) => {
@@ -692,6 +719,17 @@ export default function App() {
           user={user}
           onClose={() => setShowCommunity(false)}
           onError={onShowAlert}
+          onShowUserProfile={setSelectedUserId}
+        />
+      )}
+
+      {/* User Profile Page */}
+      {selectedUserId && (
+        <UserProfilePage
+          userId={selectedUserId}
+          currentUser={user}
+          onClose={() => setSelectedUserId(null)}
+          onError={onShowAlert}
         />
       )}
 
@@ -709,11 +747,31 @@ export default function App() {
         <ErrorBoundary>
           <MainApp
             user={user}
-            onLogout={() => setUser(null)}
+            userProfile={userProfile}
+            setUserProfile={setUserProfile}
+            onLogout={() => {
+              setUser(null);
+              setUserProfile(null);
+            }}
             onShowCommunity={() => setShowCommunity(true)}
             onShowAlert={(title, message) => setAlertDialog({ isOpen: true, title, message })}
+            onShowProfileModal={() => setShowProfileModal(true)}
           />
         </ErrorBoundary>
+      )}
+
+      {/* User Profile Modal */}
+      {showProfileModal && userProfile && (
+        <UserProfileModal
+          user={{ ...user, ...userProfile }}
+          onClose={() => setShowProfileModal(false)}
+          onUpdate={(updatedProfile) => {
+            setUserProfile(updatedProfile);
+            setShowProfileModal(false);
+            onShowAlert('保存成功', '个人资料已更新');
+          }}
+          onError={onShowAlert}
+        />
       )}
     </>
   );

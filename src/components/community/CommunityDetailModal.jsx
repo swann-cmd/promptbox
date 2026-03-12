@@ -3,13 +3,14 @@ import CategoryBadge from "../ui/CategoryBadge";
 import CopyButton from "../ui/CopyButton";
 import LikeButton from "./LikeButton";
 import FavoriteButton from "./FavoriteButton";
-import { CloseIcon, ViewIcon, CopySmallIcon, UserIcon, DateIcon } from "../ui/icons";
+import UserAvatar from "../user/UserAvatar";
+import { CloseIcon, ViewIcon, CopySmallIcon, DateIcon, ChevronRightIcon } from "../ui/icons";
 import { copyCommunityPrompt, incrementViewCount, withdrawCommunityPrompt } from "../../utils/community";
 
 /**
  * 社区提示词详情模态框
  */
-function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose, onError, onCopy, onWithdraw }) {
+function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose, onError, onCopy, onWithdraw, onShowUserProfile }) {
   const [viewCount, setViewCount] = useState(prompt.view_count || 0);
   const [copying, setCopying] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
@@ -112,19 +113,27 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
           </div>
 
           {/* Author Info */}
-          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-50">
-            <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center">
-              <UserIcon />
-            </div>
-            <div className="flex-1">
-              <p className="text-xs font-medium text-gray-700">
+          <button
+            onClick={() => {
+              if (onShowUserProfile) onShowUserProfile(prompt.user_id);
+            }}
+            className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-50 w-full hover:bg-gray-50 -mx-2 px-2 py-1 rounded-lg transition-colors text-left"
+          >
+            <UserAvatar
+              src={prompt.user_avatar_url}
+              alt={prompt.user_display_name}
+              size="md"
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-gray-700 truncate">
                 {prompt.user_display_name || "匿名用户"}
               </p>
               <p className="text-xs text-gray-400">
                 发布于 {new Date(prompt.published_at).toLocaleString("zh-CN")}
               </p>
             </div>
-          </div>
+            <ChevronRightIcon />
+          </button>
         </div>
 
         {/* Description */}

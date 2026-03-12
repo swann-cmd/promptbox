@@ -74,9 +74,22 @@ function AuthPage({ onLogin, onShowCommunity }) {
 
     if (data.user) {
       try {
+        // 创建默认分类
         await createDefaultCategories(data.user.id);
+
+        // 创建默认用户档案
+        const { error: profileError } = await supabase
+          .from('user_profiles')
+          .insert({
+            user_id: data.user.id,
+            display_name: form.name || data.user.email.split('@')[0]
+          });
+
+        if (profileError) {
+          console.warn("创建用户档案时出错:", profileError);
+        }
       } catch (err) {
-        console.warn("创建分类时出错，但不影响登录:", err);
+        console.warn("创建用户数据时出错，但不影响登录:", err);
       }
       onLogin({
         id: data.user.id,
