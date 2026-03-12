@@ -184,14 +184,14 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
     if (user) fetchPrompts();
   }, [user]);
 
-  // 加载用户档案
-  useEffect(() => {
-    if (user && !userProfile) {
-      getOrCreateUserProfile(user.id).then(setUserProfile).catch(err => {
-        console.error('加载用户档案失败:', err);
-      });
-    }
-  }, [user, userProfile]);
+  // 加载用户档案 - 暂时禁用以诊断问题
+  // useEffect(() => {
+  //   if (user && !userProfile) {
+  //     getOrCreateUserProfile(user.id).then(setUserProfile).catch(err => {
+  //       console.error('加载用户档案失败:', err);
+  //     });
+  //   }
+  // }, [user, userProfile]);
 
   // 监听认证状态变化
   useEffect(() => {
