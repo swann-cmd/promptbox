@@ -51,21 +51,22 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
     if (user) fetchPrompts();
   }, [user]);
 
-  // 加载用户档案
-  useEffect(() => {
-    if (user && !userProfile) {
-      loadUserProfile();
-    }
-  }, [user]);
-
-  const loadUserProfile = async () => {
+  // 加载用户档案 - 必须在 useEffect 之前定义
+  const loadUserProfile = useCallback(async () => {
+    if (!user) return;
     try {
       const profile = await getOrCreateUserProfile(user.id);
       setUserProfile(profile);
     } catch (error) {
       console.error('加载用户档案失败:', error);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user && !userProfile) {
+      loadUserProfile();
+    }
+  }, [user, userProfile, loadUserProfile]);
 
   // 监听认证状态变化
   useEffect(() => {
