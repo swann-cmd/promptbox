@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { supabase } from "./lib/supabase";
 
 // Components
@@ -632,6 +632,9 @@ export default function App() {
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
 
+  // Use ref to store auth subscription, ensuring proper cleanup
+  const authSubscriptionRef = useRef(null);
+
   // Stable callback for showing alerts
   const onShowAlert = useCallback((title, message) => {
     setAlertDialog({ isOpen: true, title, message });
@@ -684,7 +687,7 @@ export default function App() {
       setLoading(false);
     });
 
-    // 监听认证状态变化
+    // 监听认证状态变化 - 使用 ref 确保正确清理
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         // 只提取必要的用户字段，避免暴露敏感元数据（如 phone、confirmed_at 等）
@@ -698,7 +701,16 @@ export default function App() {
       }
     });
 
-    return () => subscription.unsubscribe();
+    // 存储订阅到 ref
+    authSubscriptionRef.current = subscription;
+
+    // Cleanup function - 确保正确清理订阅
+    return () => {
+      if (authSubscriptionRef.current) {
+        authSubscriptionRef.current.unsubscribe();
+        authSubscriptionRef.current = null;
+      }
+    };
   }, []);
 
   if (loading) {

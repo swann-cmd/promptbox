@@ -90,7 +90,20 @@ function ImportModal({ onClose, onImport, categories, onError }) {
         setPreview(data.slice(0, 10));
       } catch (parseError) {
         console.error("CSV 解析失败:", parseError);
-        setError("CSV 文件格式错误：" + parseError.message);
+
+        // 提供更友好的错误信息
+        let errorMessage = parseError.message;
+
+        // 根据错误类型提供具体建议
+        if (errorMessage.includes("引号未闭合")) {
+          errorMessage += "\n\n建议：检查包含逗号的字段是否用双引号包围。";
+        } else if (errorMessage.includes("格式错误")) {
+          errorMessage += "\n\n建议：确保文件是标准的 CSV 格式，字段用逗号分隔，如包含逗号请用双引号包围。";
+        } else {
+          errorMessage = `CSV 文件解析失败\n\n${errorMessage}\n\n建议：\n1. 下载模板文件查看正确格式\n2. 确保使用逗号分隔字段\n3. 包含逗号的字段用双引号包围\n4. 删除多余的空行`;
+        }
+
+        setError(errorMessage);
         setAllData([]);
         setPreview([]);
       }
@@ -98,12 +111,14 @@ function ImportModal({ onClose, onImport, categories, onError }) {
     reader.readAsText(selectedFile);
   };
 
-  // Parse CSV with proper handling of quoted fields
+  // Parse CSV with proper handling of quoted fields and detailed error reporting
   const parseCSV = (text) => {
     const lines = [];
     let currentLine = [];
     let currentField = "";
     let inQuotes = false;
+    let lineNumber = 1;
+    let columnNumber = 1;
 
     for (let i = 0; i < text.length; i++) {
       const char = text[i];
@@ -122,6 +137,7 @@ function ImportModal({ onClose, onImport, categories, onError }) {
         // Field separator
         currentLine.push(currentField);
         currentField = "";
+        columnNumber++;
       } else if (char === "\n" && !inQuotes) {
         // Line separator
         currentLine.push(currentField);
@@ -130,6 +146,8 @@ function ImportModal({ onClose, onImport, categories, onError }) {
         }
         currentLine = [];
         currentField = "";
+        lineNumber++;
+        columnNumber = 1;
       } else if (char === "\r" && nextChar === "\n" && !inQuotes) {
         // Windows line separator
         currentLine.push(currentField);
@@ -138,6 +156,8 @@ function ImportModal({ onClose, onImport, categories, onError }) {
         }
         currentLine = [];
         currentField = "";
+        lineNumber++;
+        columnNumber = 1;
         i++;
       } else if (char !== "\r") {
         // 忽略单独的 \r 字符
@@ -147,7 +167,7 @@ function ImportModal({ onClose, onImport, categories, onError }) {
 
     // 检查未闭合的引号
     if (inQuotes) {
-      throw new Error("CSV 格式错误：引号未闭合");
+      throw new Error(`第 ${lineNumber} 行：引号未闭合。请确保每个引号都有对应的闭合引号。`);
     }
 
     // Last line
@@ -156,11 +176,6 @@ function ImportModal({ onClose, onImport, categories, onError }) {
       if (currentLine.some((field) => field.trim())) {
         lines.push(currentLine);
       }
-    }
-
-    // 检查是否只有标题行
-    if (lines.length <= 1) {
-      throw new Error("CSV 文件没有数据行（只有标题行）");
     }
 
     return lines;

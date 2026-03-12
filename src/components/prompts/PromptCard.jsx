@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import CategoryBadge from "../ui/CategoryBadge";
 import CopyButton from "../ui/CopyButton";
 import { DeleteIcon, UsageIcon, DateIcon, ChevronRightIcon } from "../ui/icons";
@@ -59,5 +60,21 @@ function PromptCard({ prompt, onCopy, onClick, onDelete }) {
     </div>
   );
 }
+
+PromptCard.propTypes = {
+  prompt: PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    title: PropTypes.string.isRequired,
+    content: PropTypes.string.isRequired,
+    categorySlug: PropTypes.string.isRequired,
+    categoryName: PropTypes.string.isRequired,
+    model: PropTypes.string.isRequired,
+    usageCount: PropTypes.number.isRequired,
+    createdAt: PropTypes.string.isRequired,
+  }).isRequired,
+  onCopy: PropTypes.func.isRequired,
+  onClick: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
+};
 
 export default PromptCard;

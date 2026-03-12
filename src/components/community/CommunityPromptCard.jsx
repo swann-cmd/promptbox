@@ -1,4 +1,5 @@
 import { useState, memo } from "react";
+import PropTypes from "prop-types";
 import CategoryBadge from "../ui/CategoryBadge";
 import LikeButton from "./LikeButton";
 import FavoriteButton from "./FavoriteButton";
@@ -166,5 +167,46 @@ function CommunityPromptCard({
     </div>
   );
 }
+
+CommunityPromptCard.propTypes = {
+  prompt: PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    title: PropTypes.string.isRequired,
+    content: PropTypes.string.isRequired,
+    description: PropTypes.string,
+    category_slug: PropTypes.string.isRequired,
+    category_name: PropTypes.string.isRequired,
+    model: PropTypes.string.isRequired,
+    tags: PropTypes.arrayOf(PropTypes.string),
+    view_count: PropTypes.number,
+    copy_count: PropTypes.number,
+    like_count: PropTypes.number,
+    is_liked: PropTypes.bool,
+    is_favorited: PropTypes.bool,
+    user_id: PropTypes.string.isRequired,
+    user_display_name: PropTypes.string,
+    user_avatar_url: PropTypes.string,
+    published_at: PropTypes.string.isRequired,
+  }).isRequired,
+  user: PropTypes.shape({
+    id: PropTypes.string,
+  }),
+  onCopy: PropTypes.func,
+  onClick: PropTypes.func,
+  onError: PropTypes.func,
+  onLikeChange: PropTypes.func,
+  onFavoriteChange: PropTypes.func,
+  onShowUserProfile: PropTypes.func,
+};
+
+CommunityPromptCard.defaultProps = {
+  user: null,
+  onCopy: null,
+  onClick: null,
+  onError: null,
+  onLikeChange: null,
+  onFavoriteChange: null,
+  onShowUserProfile: null,
+};
 
 export default memo(CommunityPromptCard);

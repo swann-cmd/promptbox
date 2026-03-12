@@ -2,9 +2,12 @@ import { useState } from "react";
 import PropTypes from "prop-types";
 import { getToggleButtonClasses } from "../../utils/sizeClasses";
 
+const MAX_RETRIES = 2;
+
 /**
  * 通用切换按钮组件
  * 支持 LikeButton、FavoriteButton 等切换功能
+ * 包含乐观更新和自动重试机制
  */
 function ToggleButton({
   icon: Icon,
@@ -21,6 +24,7 @@ function ToggleButton({
   const [isActive, setIsActive] = useState(initialState);
   const [currentCount, setCurrentCount] = useState(count);
   const [loading, setLoading] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   const handleClick = async () => {
     if (loading) return;
@@ -34,25 +38,45 @@ function ToggleButton({
     setCurrentCount(newCount);
 
     setLoading(true);
-    try {
-      const data = await apiCall();
-      setIsActive(data.isLiked ?? data.isFavorited ?? data.isActive);
-      setCurrentCount(data.likeCount ?? data.count ?? currentCount);
+    let attempts = 0;
+    const maxAttempts = MAX_RETRIES + 1; // 初始尝试 + 重试次数
 
-      // 通知父组件状态变化
-      if (onChange && data.isLiked !== undefined) {
-        onChange({ isLiked: data.isLiked, likeCount: data.likeCount });
-      } else if (onChange && data.isFavorited !== undefined) {
-        onChange({ isFavorited: data.isFavorited });
+    while (attempts < maxAttempts) {
+      try {
+        const data = await apiCall();
+        setIsActive(data.isLiked ?? data.isFavorited ?? data.isActive);
+        setCurrentCount(data.likeCount ?? data.count ?? currentCount);
+
+        // 通知父组件状态变化
+        if (onChange && data.isLiked !== undefined) {
+          onChange({ isLiked: data.isLiked, likeCount: data.likeCount });
+        } else if (onChange && data.isFavorited !== undefined) {
+          onChange({ isFavorited: data.isFavorited });
+        }
+
+        // 成功后重置重试计数
+        setRetryCount(0);
+        break;
+      } catch (error) {
+        attempts++;
+        console.error(`操作失败 (尝试 ${attempts}/${maxAttempts}):`, error);
+
+        // 如果还有重试机会，继续重试
+        if (attempts < maxAttempts) {
+          // 等待一段时间后重试（指数退避）
+          await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempts - 1)));
+          continue;
+        }
+
+        // 所有尝试都失败，回滚状态
+        console.error("操作失败，已回滚状态");
+        setIsActive(rollbackState.isActive);
+        setCurrentCount(rollbackState.count);
+        setRetryCount(0);
       }
-    } catch (error) {
-      console.error("操作失败:", error);
-      // 回滚
-      setIsActive(rollbackState.isActive);
-      setCurrentCount(rollbackState.count);
-    } finally {
-      setLoading(false);
     }
+
+    setLoading(false);
   };
 
   const colorClasses = {
