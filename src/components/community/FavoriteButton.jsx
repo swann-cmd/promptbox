@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PropTypes from "prop-types";
 import { StarIcon } from "../ui/icons";
 import { toggleFavorite } from "../../utils/community";
 
@@ -56,5 +57,18 @@ function FavoriteButton({ communityPromptId, initialFavorited = false, size = "m
     </button>
   );
 }
+
+FavoriteButton.propTypes = {
+  communityPromptId: PropTypes.string.isRequired,
+  initialFavorited: PropTypes.bool,
+  size: PropTypes.oneOf(['sm', 'md', 'lg']),
+  onFavoriteChange: PropTypes.func,
+};
+
+FavoriteButton.defaultProps = {
+  initialFavorited: false,
+  size: 'md',
+  onFavoriteChange: null,
+};
 
 export default FavoriteButton;

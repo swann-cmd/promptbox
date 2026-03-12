@@ -7,14 +7,24 @@
 export function sanitizeInput(input, maxLength = 10000) {
   if (typeof input !== "string") return "";
 
-  // 移除危险字符（防止脚本注入）
+  // 更全面的清理策略
   const cleaned = input
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "") // 移除 script 标签
-    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, "") // 移除 iframe 标签
-    .replace(/javascript:/gi, "") // 移除 javascript: 协议
-    .replace(/on\w+\s*=/gi, ""); // 移除事件处理器（如 onclick=）
+    // 移除 script 标签（处理大小写变体）
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+    // 移除 iframe 标签（处理大小写变体）
+    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, "")
+    // 移除 javascript: 协议（处理大小写变体）
+    .replace(/javascript:/gi, "")
+    // 移除事件处理器（如 onclick=, onerror=, onload= 等）
+    .replace(/\s+on\w+\s*=/gi, "")
+    // 移除所有 HTML 标签
+    .replace(/<[^>]+>/g, "")
+    // 移除 HTML 实体编码尝试
+    .replace(/&#\w+;/gi, "")
+    // 移除 data: 协议
+    .replace(/data:(?!image\/)/gi, "");
 
-  // 限制长度
+  // 限制长度并去除首尾空格
   return cleaned.slice(0, maxLength).trim();
 }
 

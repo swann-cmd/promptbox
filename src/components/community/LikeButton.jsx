@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PropTypes from "prop-types";
 import { HeartIcon } from "../ui/icons";
 import { toggleLike } from "../../utils/community";
 
@@ -62,5 +63,20 @@ function LikeButton({ communityPromptId, initialLiked = false, initialLikeCount 
     </button>
   );
 }
+
+LikeButton.propTypes = {
+  communityPromptId: PropTypes.string.isRequired,
+  initialLiked: PropTypes.bool,
+  initialLikeCount: PropTypes.number,
+  size: PropTypes.oneOf(['sm', 'md', 'lg']),
+  onLikeChange: PropTypes.func,
+};
+
+LikeButton.defaultProps = {
+  initialLiked: false,
+  initialLikeCount: 0,
+  size: 'md',
+  onLikeChange: null,
+};
 
 export default LikeButton;

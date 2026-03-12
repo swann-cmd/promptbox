@@ -15,6 +15,7 @@ function UserProfilePage({ userId, currentUser, onClose, onError }) {
   const [stats, setStats] = useState(null);
   const [prompts, setPrompts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedPrompt, setSelectedPrompt] = useState(null);
   const [userLikes, setUserLikes] = useState(new Set());
   const [userFavorites, setUserFavorites] = useState(new Set());
@@ -75,12 +76,20 @@ function UserProfilePage({ userId, currentUser, onClose, onError }) {
     const load = async () => {
       if (!aborted) {
         setLoading(true);
-        await loadUserData();
-        if (currentUser && !aborted) {
-          await loadUserInteractions();
-        }
-        if (!aborted) {
-          setLoading(false);
+        setError(null);
+        try {
+          await loadUserData();
+          if (currentUser && !aborted) {
+            await loadUserInteractions();
+          }
+        } catch (err) {
+          if (!aborted) {
+            setError(err);
+          }
+        } finally {
+          if (!aborted) {
+            setLoading(false);
+          }
         }
       }
     };
@@ -125,6 +134,30 @@ function UserProfilePage({ userId, currentUser, onClose, onError }) {
               </svg>
             </div>
             <p className="text-sm text-gray-400">加载中...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="fixed inset-0 bg-gray-50 z-50 overflow-y-auto" style={APP_FONT}>
+        <div className="max-w-5xl mx-auto px-6 py-7">
+          <div className="text-center py-24">
+            <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+              <svg className="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <p className="text-sm text-gray-600 mb-2">加载失败</p>
+            <p className="text-xs text-gray-400">{error.message || '请稍后重试'}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              重新加载
+            </button>
           </div>
         </div>
       </div>
