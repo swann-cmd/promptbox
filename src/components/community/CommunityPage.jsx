@@ -24,78 +24,8 @@ function CommunityPage({ user, onClose, onError, onShowUserProfile }) {
 
   // 加载社区提示词
   useEffect(() => {
-    let aborted = false;
-
-    const fetch = async () => {
-      setLoading(true);
-      try {
-        let query = supabase
-          .from("community_prompts")
-          .select("*")
-          .eq("status", "published");
-
-        if (activeTab === "latest") {
-          query = query.order("created_at", { ascending: false });
-        } else {
-          query = query.order("like_count", { ascending: false })
-            .order("copy_count", { ascending: false });
-        }
-
-        query = query.limit(COMMUNITY_PROMPTS_LIMIT);
-
-        const { data, error } = await query;
-
-        if (error) throw error;
-
-        // 获取所有唯一的 user_id
-        const userIds = [...new Set(data.map(p => p.user_id))];
-
-        // 批量获取用户档案
-        let profilesMap = {};
-        if (userIds.length > 0) {
-          const { data: profiles } = await supabase
-            .from("user_profiles")
-            .select("user_id, display_name, avatar_url")
-            .in("user_id", userIds);
-
-          if (profiles) {
-            profilesMap = profiles.reduce((acc, profile) => {
-              // 只保留需要的字段，避免 id 冲突
-              acc[profile.user_id] = {
-                user_id: profile.user_id,
-                display_name: profile.display_name,
-                avatar_url: profile.avatar_url
-              };
-              return acc;
-            }, {});
-          }
-        }
-
-        // 合并用户档案数据
-        const dataWithProfiles = data.map(p => ({
-          ...p,
-          user_profiles: profilesMap[p.user_id] || null
-        }));
-
-        if (!aborted) {
-          setPrompts(formatCommunityPromptData(dataWithProfiles));
-        }
-      } catch (error) {
-        console.error("加载社区提示词失败:", error);
-        if (!aborted && onError) onError("加载失败", error.message);
-      } finally {
-        if (!aborted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetch();
-
-    return () => {
-      aborted = true;
-    };
-  }, [activeTab, onError]);
+    fetchCommunityPrompts();
+  }, [activeTab, fetchCommunityPrompts]);
 
   // 加载用户互动状态
   useEffect(() => {
@@ -140,7 +70,19 @@ function CommunityPage({ user, onClose, onError, onShowUserProfile }) {
     setCategories(Array.from(categoryMap.values()));
   }, [prompts]);
 
-  const fetchCommunityPrompts = async () => {
+  const loadUserInteractions = async () => {
+    if (!user) return;
+
+    try {
+      const { likedIds, favoritedIds } = await fetchUserInteractions(user.id);
+      setUserLikes(likedIds);
+      setUserFavorites(favoritedIds);
+    } catch (error) {
+      console.error("加载用户互动状态失败:", error);
+    }
+  };
+
+  const fetchCommunityPrompts = useCallback(async () => {
     setLoading(true);
     try {
       let query = supabase
@@ -174,7 +116,6 @@ function CommunityPage({ user, onClose, onError, onShowUserProfile }) {
 
         if (profiles) {
           profilesMap = profiles.reduce((acc, profile) => {
-            // 只保留需要的字段，避免 id 冲突
             acc[profile.user_id] = {
               user_id: profile.user_id,
               display_name: profile.display_name,
@@ -198,19 +139,7 @@ function CommunityPage({ user, onClose, onError, onShowUserProfile }) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const loadUserInteractions = async () => {
-    if (!user) return;
-
-    try {
-      const { likedIds, favoritedIds } = await fetchUserInteractions(user.id);
-      setUserLikes(likedIds);
-      setUserFavorites(favoritedIds);
-    } catch (error) {
-      console.error("加载用户互动状态失败:", error);
-    }
-  };
+  }, [activeTab, onError]);
 
   const handleLikeChange = useCallback(({ communityPromptId, isLiked, likeCount }) => {
     setPrompts(prev => prev.map(p =>

@@ -6,6 +6,7 @@ import FavoriteButton from "./FavoriteButton";
 import UserAvatar from "../user/UserAvatar";
 import { CloseIcon, ViewIcon, CopySmallIcon, DateIcon, ChevronRightIcon } from "../ui/icons";
 import { copyCommunityPrompt, incrementViewCount, withdrawCommunityPrompt } from "../../utils/community";
+import ConfirmDialog from "../ui/dialogs/ConfirmDialog";
 
 /**
  * 社区提示词详情模态框
@@ -14,6 +15,7 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
   const [viewCount, setViewCount] = useState(prompt.view_count || 0);
   const [copying, setCopying] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: "", message: "", onConfirm: null });
   const hasViewedRef = useRef(false);
 
   // 检查是否为该提示词的作者
@@ -57,24 +59,28 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
   };
 
   const handleWithdraw = async () => {
-    if (!confirm("确定要撤回这条提示词吗？撤回后将不再显示在社区广场。")) {
-      return;
-    }
-
-    setWithdrawing(true);
-    try {
-      await withdrawCommunityPrompt(prompt.id);
-      if (onError) onError("撤回成功", "提示词已从社区撤回");
-      // 关闭详情页
-      onClose();
-      // 刷新社区列表
-      if (onWithdraw) onWithdraw();
-    } catch (error) {
-      console.error("撤回失败:", error);
-      if (onError) onError("撤回失败", error.message);
-    } finally {
-      setWithdrawing(false);
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: "撤回提示词",
+      message: "确定要撤回这条提示词吗？撤回后将不再显示在社区广场。",
+      onConfirm: async () => {
+        setConfirmDialog({ isOpen: false, title: "", message: "", onConfirm: null });
+        setWithdrawing(true);
+        try {
+          await withdrawCommunityPrompt(prompt.id);
+          if (onError) onError("撤回成功", "提示词已从社区撤回");
+          // 关闭详情页
+          onClose();
+          // 刷新社区列表
+          if (onWithdraw) onWithdraw();
+        } catch (error) {
+          console.error("撤回失败:", error);
+          if (onError) onError("撤回失败", error.message);
+        } finally {
+          setWithdrawing(false);
+        }
+      }
+    });
   };
 
   return (
@@ -219,6 +225,17 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
           </div>
         </div>
       </div>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        onConfirm={() => {
+          if (confirmDialog.onConfirm) confirmDialog.onConfirm();
+        }}
+        onCancel={() => setConfirmDialog({ isOpen: false, title: "", message: "", onConfirm: null })}
+      />
     </div>
   );
 }

@@ -16,7 +16,7 @@ import UserProfilePage from "./components/user/UserProfilePage";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
 
 // Constants & Utilities
-import { DEFAULT_CATEGORIES, CATEGORY_COLORS } from "./constants/categories";
+import { DEFAULT_CATEGORIES } from "./constants/categories";
 import { MODELS, APP_FONT } from "./constants/app";
 import { validatePrompt } from "./utils/validation";
 import { sanitizeInput } from "./utils/sanitize";
