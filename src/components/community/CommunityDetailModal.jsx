@@ -4,9 +4,10 @@ import CopyButton from "../ui/CopyButton";
 import LikeButton from "./LikeButton";
 import FavoriteButton from "./FavoriteButton";
 import UserAvatar from "../user/UserAvatar";
-import { CloseIcon, ViewIcon, CopySmallIcon, DateIcon, ChevronRightIcon } from "../ui/icons";
+import ModalWrapper from "../ui/ModalWrapper";
+import { ViewIcon, CopySmallIcon, DateIcon, ChevronRightIcon } from "../ui/icons";
 import { copyCommunityPrompt, incrementViewCount, withdrawCommunityPrompt } from "../../utils/community";
-import ConfirmDialog from "../ui/dialogs/ConfirmDialog";
+import Dialog from "../ui/dialogs/Dialog";
 
 /**
  * 社区提示词详情模态框
@@ -89,18 +90,15 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
   };
 
   return (
-    <div
-      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-        style={{ maxHeight: "85vh" }}
+    <>
+      <ModalWrapper
+        isOpen={true}
+        onClose={onClose}
+        size="lg"
       >
-        {/* Header */}
-        <div className="px-6 pt-6 pb-4 border-b border-gray-50">
-          <div className="flex items-start justify-between gap-4">
+        {/* Custom header content */}
+        <div className="px-6 pt-6 pb-4 -mt-2 -mx-6">
+          <div className="flex items-start justify-between gap-4 mb-2.5">
             <div className="flex-1">
               <h2 className="text-lg font-semibold text-gray-900 leading-snug mb-2.5">
                 {prompt.title}
@@ -115,12 +113,6 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
                 </span>
               </div>
             </div>
-            <button
-              onClick={onClose}
-              className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-            >
-              <CloseIcon />
-            </button>
           </div>
 
           {/* Author Info */}
@@ -149,7 +141,7 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
 
         {/* Description */}
         {prompt.description && (
-          <div className="px-6 py-4 bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100">
+          <div className="px-6 py-4 bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100 -mx-6">
             <p className="text-sm text-gray-700 leading-relaxed">
               {prompt.description}
             </p>
@@ -157,7 +149,7 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
         )}
 
         {/* Content */}
-        <div className="px-6 py-5 overflow-y-auto" style={{ maxHeight: "calc(85vh - 320px)" }}>
+        <div className="px-6 py-5 overflow-y-auto -mx-6" style={{ maxHeight: "calc(85vh - 320px)" }}>
           <div className="bg-gray-50 rounded-2xl p-4">
             <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
               {prompt.content}
@@ -180,7 +172,7 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
         </div>
 
         {/* Footer */}
-        <div className="px-6 pb-6 pt-3 border-t border-gray-50">
+        <div className="px-6 pb-6 pt-3 border-t border-gray-50 -mx-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1.5 text-xs text-gray-400">
@@ -229,19 +221,20 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
             </div>
           </div>
         </div>
-      </div>
+      </ModalWrapper>
 
       {/* Confirm Dialog */}
-      <ConfirmDialog
+      <Dialog
         isOpen={confirmDialog.isOpen}
         title={confirmDialog.title}
         message={confirmDialog.message}
+        type="confirm"
         onConfirm={() => {
           if (confirmDialog.onConfirm) confirmDialog.onConfirm();
         }}
         onCancel={() => setConfirmDialog({ isOpen: false, title: "", message: "", onConfirm: null })}
       />
-    </div>
+    </>
   );
 }
 
