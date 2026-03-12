@@ -10,8 +10,8 @@ import ImportModal from "./components/prompts/ImportModal";
 import ExportModal from "./components/prompts/ExportModal";
 import AlertDialog from "./components/ui/dialogs/AlertDialog";
 import ConfirmDialog from "./components/ui/dialogs/ConfirmDialog";
-// 诊断：暂时注释掉社区相关导入
-// import CommunityPage from "./components/community/CommunityPage";
+// 逐步测试：第一步 - 只导入 CommunityPage
+import CommunityPage from "./components/community/CommunityPage";
 // import UserProfileModal from "./components/user/UserProfileModal";
 // import UserProfilePage from "./components/user/UserProfilePage";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
@@ -710,15 +710,15 @@ export default function App() {
 
   return (
     <>
-      {/* 诊断：暂时注释掉社区和用户档案功能 */}
-      {/* {showCommunity && (
+      {/* 逐步测试：恢复 CommunityPage */}
+      {showCommunity && (
         <CommunityPage
           user={user}
           onClose={() => setShowCommunity(false)}
           onError={onShowAlert}
           onShowUserProfile={setSelectedUserId}
         />
-      )} */}
+      )}
 
       {/* {selectedUserId && (
         <UserProfilePage
@@ -738,7 +738,7 @@ export default function App() {
       />
 
       {!user ? (
-        <AuthPage onLogin={setUser} onShowCommunity={() => {}} />
+        <AuthPage onLogin={setUser} onShowCommunity={() => setShowCommunity(true)} />
       ) : (
         <ErrorBoundary>
           <MainApp
@@ -749,9 +749,9 @@ export default function App() {
               setUser(null);
               setUserProfile(null);
             }}
-            onShowCommunity={() => {}}
+            onShowCommunity={() => setShowCommunity(true)}
             onShowAlert={(title, message) => setAlertDialog({ isOpen: true, title, message })}
-            onShowProfileModal={() => {}}
+            onShowProfileModal={() => setShowProfileModal(true)}
           />
         </ErrorBoundary>
       )}
