@@ -4,6 +4,7 @@ import UserAvatar from "./UserAvatar";
 import CommunityPromptCard from "../community/CommunityPromptCard";
 import CommunityDetailModal from "../community/CommunityDetailModal";
 import { CloseIcon, EmptyStateIcon, DocumentIcon, HeartIcon, CopySmallIcon, ViewIcon } from "../ui/icons";
+import { LoadingState, EmptyState } from "../ui";
 import { getOrCreateUserProfile, getUserProfileStats, fetchUserInteractions } from "../../utils/community";
 import { APP_FONT } from "../../constants/app";
 
@@ -126,15 +127,10 @@ function UserProfilePage({ userId, currentUser, onClose, onError }) {
     return (
       <div className="fixed inset-0 bg-gray-50 z-50 overflow-y-auto" style={APP_FONT}>
         <div className="max-w-5xl mx-auto px-6 py-7">
-          <div className="text-center py-24">
-            <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-              <svg className="w-6 h-6 text-blue-500 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-            </div>
-            <p className="text-sm text-gray-400">加载中...</p>
-          </div>
+          <LoadingState
+            message="加载中..."
+            className="py-24"
+          />
         </div>
       </div>
     );
@@ -144,21 +140,23 @@ function UserProfilePage({ userId, currentUser, onClose, onError }) {
     return (
       <div className="fixed inset-0 bg-gray-50 z-50 overflow-y-auto" style={APP_FONT}>
         <div className="max-w-5xl mx-auto px-6 py-7">
-          <div className="text-center py-24">
-            <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-              <svg className="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <EmptyState
+            icon={
+              <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-            </div>
-            <p className="text-sm text-gray-600 mb-2">加载失败</p>
-            <p className="text-xs text-gray-400">{error.message || '请稍后重试'}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-4 px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
-            >
-              重新加载
-            </button>
-          </div>
+            }
+            title="加载失败"
+            message={error.message || '请稍后重试'}
+            action={
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                重新加载
+              </button>
+            }
+          />
         </div>
       </div>
     );
@@ -287,13 +285,11 @@ function UserProfilePage({ userId, currentUser, onClose, onError }) {
             ))}
           </div>
         ) : (
-          <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-            <div className="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-              <EmptyStateIcon />
-            </div>
-            <p className="text-sm text-gray-400">
-              {isOwnProfile ? "你还没有发布任何提示词" : "该用户还没有发布任何提示词"}
-            </p>
+          <div className="bg-white rounded-2xl border border-gray-100">
+            <EmptyState
+              icon={<EmptyStateIcon />}
+              message={isOwnProfile ? "你还没有发布任何提示词" : "该用户还没有发布任何提示词"}
+            />
           </div>
         )}
       </div>

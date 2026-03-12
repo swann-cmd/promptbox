@@ -13,7 +13,10 @@ import {
 import {
   AlertDialog,
   ConfirmDialog,
-  ErrorBoundary
+  ErrorBoundary,
+  SearchInput,
+  LoadingState,
+  EmptyState as EmptyStateUI
 } from "./components/ui";
 import {
   CommunityPage
@@ -24,13 +27,10 @@ import {
 } from "./components/user";
 import {
   LogoIcon,
-  CloseIcon,
   PlusIcon,
   UploadIcon,
   DownloadIcon,
-  SearchIcon,
   LoadingSpinner,
-  EmptyStateIcon,
   CommunityIcon
 } from "./components/ui/icons";
 
@@ -492,25 +492,13 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
 
       <div className="max-w-5xl mx-auto px-6 py-7">
         {/* Search */}
-        <div className="relative mb-5">
-          <div className="absolute left-4 top-1/2 -translate-y-1/2">
-            <SearchIcon />
-          </div>
-          <input
-            className="w-full pl-11 pr-4 py-3 rounded-2xl bg-white border border-gray-100 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300 transition-all shadow-sm"
-            placeholder="搜索提示词标题或内容..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 transition-colors"
-            >
-              <CloseIcon />
-            </button>
-          )}
-        </div>
+        <SearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="搜索提示词标题或内容..."
+          color="blue"
+          className="mb-5"
+        />
 
         {/* Category Tabs */}
         <div className="flex gap-2 mb-5 overflow-x-auto pb-1">
@@ -548,12 +536,10 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
 
         {/* Loading */}
         {loading ? (
-          <div className="text-center py-24">
-            <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-              <LoadingSpinner />
-            </div>
-            <p className="text-sm text-gray-400">加载中...</p>
-          </div>
+          <LoadingState
+            icon={<LoadingSpinner />}
+            message="加载中..."
+          />
         ) : filtered.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filtered.map((p) => (
@@ -567,18 +553,19 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
             ))}
           </div>
         ) : (
-          <div className="text-center py-24">
-            <div className="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
-              <EmptyStateIcon />
-            </div>
-            <p className="text-sm text-gray-400">没有找到相关提示词</p>
-            <button
-              onClick={() => { setSearchQuery(""); setActiveCategory("all"); }}
-              className="mt-2 text-xs text-blue-500 hover:text-blue-600"
-            >
-              清除筛选
-            </button>
-          </div>
+          <EmptyStateUI
+            icon={<EmptyStateIcon />}
+            title="没有找到相关提示词"
+            message="试试调整搜索词或选择其他分类"
+            action={
+              <button
+                onClick={() => { setSearchQuery(""); setActiveCategory("all"); }}
+                className="text-sm text-blue-500 hover:text-blue-600 font-medium"
+              >
+                清除筛选
+              </button>
+            }
+          />
         )}
       </div>
 
