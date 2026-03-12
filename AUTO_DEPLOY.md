@@ -1,4 +1,4 @@
-# 🔄 设置自动部署（Git 推送自动触发）
+# 🔄 推送到 GitHub 自动部署到 Vercel
 
 ## 当前状态
 - ❌ 项目尚未连接到 Vercel
@@ -7,7 +7,20 @@
 
 ---
 
-## 🚀 设置自动部署（只需操作一次）
+## 🚀 工作流程说明
+
+### 一次性设置（仅需一次）
+在 Vercel 导入项目，Vercel 自动配置 GitHub webhook
+
+### 之后每次更新
+```bash
+git push origin main
+# ✅ Vercel 自动检测并部署
+```
+
+---
+
+## 📋 详细设置步骤
 
 ### 第 1 步：在 Vercel 导入项目
 
@@ -17,14 +30,14 @@
 4. 搜索并导入：`swann-cmd/promptbox`
 5. Vercel 会自动检测配置
 
-### 第 2 步：配置自动部署
+### 第 2 步：Vercel 自动配置（无需手动操作）
 
 导入后，Vercel 会自动：
 - ✅ 设置 GitHub webhook
 - ✅ 连接 `main` 分支到生产环境
 - ✅ 每次推送到 `main` 自动触发部署
 
-### 第 3 步：完成！
+### 第 3 步：完成自动部署设置！
 
 以后每次你执行：
 ```bash
@@ -37,9 +50,9 @@ Vercel 会**自动检测推送并部署**！
 
 ---
 
-## 🎯 首次部署
+## 🎯 首次部署（一次性操作）
 
-现在需要手动触发第一次部署：
+现在需要手动触发第一次部署以启用自动部署：
 
 ### 方式 A：通过 Vercel 网站
 
@@ -56,9 +69,9 @@ npx vercel --prod
 
 ---
 
-## ✅ 设置后的效果
+## ✅ 设置完成后的工作流
 
-第一次设置后，您的工作流会变成：
+完成一次性设置后，您的工作流变成：
 
 ```bash
 # 1. 修改代码
@@ -69,10 +82,10 @@ git add .
 git commit -m "更新功能"
 
 # 3. 推送到 GitHub
-git push
+git push origin main
 
 # ✅ Vercel 自动检测并部署！
-# 几分钟后，访问您的 Vercel URL 即可看到更新
+# 📱 2-3 分钟后访问您的 Vercel URL 即可看到更新
 ```
 
 ---
@@ -89,9 +102,15 @@ git push
 
 ## 🎉 总结
 
-**现在需要做的：**
+### 现在需要做的（一次性操作）：
 1. 访问 https://vercel.com/new
 2. 导入 `swann-cmd/promptbox`
 3. 点击 Deploy
 
-**以后每次推送都会自动部署！** 🚀
+### 之后每次更新（自动部署）：
+```bash
+git push origin main
+# ✅ 自动部署到 Vercel！
+```
+
+**推送到 GitHub → 自动部署到 Vercel！** 🚀

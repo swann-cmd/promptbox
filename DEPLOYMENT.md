@@ -23,45 +23,99 @@
 
 ---
 
-## 🚀 部署到 Vercel
+## 🚀 推送到 GitHub 自动部署到 Vercel（推荐）
 
-### 方法 1: 使用提供的部署脚本（推荐）
+### 工作流程
+
+**一次性设置（仅需一次）：**
+1. 访问 Vercel 并导入 GitHub 仓库
+2. Vercel 自动配置 GitHub webhook
+3. 完成首次部署
+
+**日常更新（自动部署）：**
+```bash
+git add .
+git commit -m "更新功能"
+git push origin main
+# ✅ Vercel 自动检测并部署
+```
+
+---
+
+### 一次性设置步骤
+
+#### 第 1 步：访问 Vercel
+
+1. 打开浏览器访问：https://vercel.com/new
+2. 使用 GitHub 账号登录
+
+#### 第 2 步：导入项目
+
+1. 点击 **"Import Git Repository"**
+2. 点击 **GitHub** 图标授权（首次需要）
+3. 搜索并选择：`swann-cmd/promptbox`
+4. 点击 **"Import"** 按钮
+
+#### 第 3 步：确认配置
+
+Vercel 会自动检测配置（无需修改）：
+```
+Framework Preset: Vite
+Root Directory: ./
+Build Command: npm run build
+Output Directory: dist
+Install Command: npm install
+```
+
+#### 第 4 步：完成首次部署
+
+1. 点击 **"Deploy"** 按钮
+2. 等待 2-3 分钟
+3. 部署成功！🎉
+
+#### 第 5 步：自动部署已启用
+
+✅ Vercel 已自动设置 GitHub webhook
+✅ 之后每次 `git push` 都会自动触发部署
+✅ 在 Vercel 仪表板可查看部署历史
+
+---
+
+### 日常开发工作流
 
 ```bash
-# 1. 确保所有更改已提交
-git status
+# 1. 本地开发
+npm run dev
 
-# 2. 如果有未提交的更改，先提交
+# 2. 提交更改
 git add .
-git commit -m "测试通过，准备部署"
+git commit -m "添加新功能"
+
+# 3. 推送到 GitHub
 git push origin main
 
-# 3. 运行部署脚本
-./deploy.sh
+# ✅ Vercel 自动检测并部署！
+# 📱 2-3 分钟后新版本上线
 ```
 
-### 方法 2: 手动部署
+---
+
+### 其他部署方法
+
+#### 使用 Vercel CLI（可选）
 
 ```bash
-# 1. 登录 Vercel（首次使用）
-npx vercel login
+# 安装 Vercel CLI
+npm i -g vercel
 
-# 2. 部署到生产环境
-npx vercel --prod
+# 登录
+vercel login
 
-# 或者使用 npm script
-npm run deploy
+# 部署到生产环境
+vercel --prod
 ```
 
-### 方法 3: 通过 Vercel GitHub 集成（最简单）
-
-1. 访问 [vercel.com](https://vercel.com)
-2. 连接您的 GitHub 账户
-3. 导入项目 `swann-cmd/promptbox`
-4. Vercel 会自动：
-   - 检测到这是 Vite + React 项目
-   - 配置构建设置
-   - 每次推送到 main 分支自动部署
+**注意**：推荐使用 GitHub 自动部署，无需手动操作。
 
 ---
 

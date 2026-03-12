@@ -1,8 +1,25 @@
 # 🚀 PromptBox 部署指南 - 立即上线
 
-## 🎯 推荐：通过 Vercel 网站部署（最简单）
+## 🎯 推送到 GitHub 自动部署到 Vercel（推荐）
 
-### 第 1 步：访问 Vercel
+### 📌 工作流程说明
+
+**一次性设置（首次部署）：**
+1. 访问 Vercel 并导入项目
+2. Vercel 自动设置 GitHub webhook
+3. 完成首次部署
+
+**之后每次更新：**
+```bash
+git add .
+git commit -m "更新功能"
+git push origin main
+# ✅ Vercel 自动检测到推送并部署
+```
+
+---
+
+### 第 1 步：访问 Vercel（一次性设置）
 
 点击下面的链接打开部署页面：
 
@@ -74,11 +91,26 @@ https://promptbox-abc123.vercel.app
 
 ---
 
-## 🔄 更新部署
+## 🔄 更新部署（自动）
 
-每次推送到 `main` 分支，Vercel 会自动重新部署！
+**每次推送到 GitHub，Vercel 会自动部署！**
 
-或者手动部署：
+```bash
+# 本地开发完成后
+git add .
+git commit -m "添加新功能"
+git push origin main
+
+# ✅ Vercel 自动检测推送并部署
+# 📱 2-3 分钟后访问新版本
+```
+
+**查看部署状态：**
+- 访问 Vercel 项目仪表板
+- 查看 "Deployments" 标签
+- 实时查看构建进度和日志
+
+**如需手动重新部署：**
 1. 访问 Vercel 项目页面
 2. 点击 **"Redeploy"**
 3. 选择 **"Production"**
