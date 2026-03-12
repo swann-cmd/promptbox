@@ -37,6 +37,11 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
     incrementView();
   }, [prompt.id]);
 
+  // 同步 prompt.view_count 的变化
+  useEffect(() => {
+    setViewCount(prompt.view_count || 0);
+  }, [prompt.view_count]);
+
   const handleCopy = async () => {
     setCopying(true);
     try {

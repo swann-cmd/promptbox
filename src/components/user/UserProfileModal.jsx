@@ -5,6 +5,18 @@ import { updateUserProfile } from "../../utils/community";
 import UserAvatar from "./UserAvatar";
 
 /**
+ * 验证 URL 格式是否有效
+ */
+const isValidUrl = (string) => {
+  try {
+    new URL(string);
+    return true;
+  } catch (_) {
+    return false;
+  }
+};
+
+/**
  * User Profile Edit Modal Component
  */
 function UserProfileModal({ user, onClose, onUpdate, onError }) {
@@ -50,15 +62,6 @@ function UserProfileModal({ user, onClose, onUpdate, onError }) {
       onError("保存失败", error.message || "更新失败，请重试");
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const isValidUrl = (string) => {
-    try {
-      new URL(string);
-      return true;
-    } catch (_) {
-      return false;
     }
   };
 

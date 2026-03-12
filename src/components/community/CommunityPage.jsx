@@ -12,7 +12,6 @@ import { COMMUNITY_PROMPTS_LIMIT, COMMUNITY_TAB } from "../../constants/communit
  */
 function CommunityPage({ user, onClose, onError, onShowUserProfile }) {
   const [prompts, setPrompts] = useState([]);
-  const [filteredPrompts, setFilteredPrompts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("latest");
@@ -129,8 +128,8 @@ function CommunityPage({ user, onClose, onError, onShowUserProfile }) {
     }
   }, [user, loadUserInteractions]);
 
-  // 过滤逻辑
-  useEffect(() => {
+  // 过滤逻辑 - 使用 useMemo 优化性能
+  const filteredPrompts = useMemo(() => {
     let filtered = prompts;
 
     if (activeCategory !== "all") {
@@ -148,7 +147,7 @@ function CommunityPage({ user, onClose, onError, onShowUserProfile }) {
       );
     }
 
-    setFilteredPrompts(filtered);
+    return filtered;
   }, [prompts, activeCategory, searchQuery]);
 
   // 提取唯一分类

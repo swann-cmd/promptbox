@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import CategoryBadge from "../ui/CategoryBadge";
 import LikeButton from "./LikeButton";
 import FavoriteButton from "./FavoriteButton";
@@ -167,4 +167,4 @@ function CommunityPromptCard({
   );
 }
 
-export default CommunityPromptCard;
+export default memo(CommunityPromptCard);
