@@ -41,44 +41,6 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: "", message: "", onConfirm: null });
   const [showExportModal, setShowExportModal] = useState(false);
 
-  // 加载分类
-  useEffect(() => {
-    fetchCategories();
-  }, [user]);
-
-  // 加载 prompts
-  useEffect(() => {
-    if (user) fetchPrompts();
-  }, [user]);
-
-  // 加载用户档案 - 必须在 useEffect 之前定义
-  const loadUserProfile = useCallback(async () => {
-    if (!user) return;
-    try {
-      const profile = await getOrCreateUserProfile(user.id);
-      setUserProfile(profile);
-    } catch (error) {
-      console.error('加载用户档案失败:', error);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (user && !userProfile) {
-      loadUserProfile();
-    }
-  }, [user, userProfile, loadUserProfile]);
-
-  // 监听认证状态变化
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_OUT") {
-        onLogout();
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
   const fetchCategories = async () => {
     try {
       const { data, error } = await supabase
@@ -208,6 +170,39 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
       setLoading(false);
     }
   };
+
+  // ============== useEffect Hooks ==============
+  // 注意：所有 useEffect 必须在函数定义之后
+
+  // 加载分类
+  useEffect(() => {
+    fetchCategories();
+  }, [user]);
+
+  // 加载 prompts
+  useEffect(() => {
+    if (user) fetchPrompts();
+  }, [user]);
+
+  // 加载用户档案
+  useEffect(() => {
+    if (user && !userProfile) {
+      getOrCreateUserProfile(user.id).then(setUserProfile).catch(err => {
+        console.error('加载用户档案失败:', err);
+      });
+    }
+  }, [user, userProfile]);
+
+  // 监听认证状态变化
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        onLogout();
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleCopy = async (id) => {
     try {
