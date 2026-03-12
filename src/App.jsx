@@ -10,10 +10,10 @@ import ImportModal from "./components/prompts/ImportModal";
 import ExportModal from "./components/prompts/ExportModal";
 import AlertDialog from "./components/ui/dialogs/AlertDialog";
 import ConfirmDialog from "./components/ui/dialogs/ConfirmDialog";
-// 逐步测试：第一步 - 只导入 CommunityPage
+// 逐步测试：第二步 - 恢复 UserProfilePage
 import CommunityPage from "./components/community/CommunityPage";
+import UserProfilePage from "./components/user/UserProfilePage";
 // import UserProfileModal from "./components/user/UserProfileModal";
-// import UserProfilePage from "./components/user/UserProfilePage";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
 
 // Constants & Utilities
@@ -720,14 +720,15 @@ export default function App() {
         />
       )}
 
-      {/* {selectedUserId && (
+      {/* 恢复 UserProfilePage */}
+      {selectedUserId && (
         <UserProfilePage
           userId={selectedUserId}
           currentUser={user}
           onClose={() => setSelectedUserId(null)}
           onError={onShowAlert}
         />
-      )} */}
+      )}
 
       {/* Alert Dialog */}
       <AlertDialog
