@@ -10,10 +10,10 @@ import ImportModal from "./components/prompts/ImportModal";
 import ExportModal from "./components/prompts/ExportModal";
 import AlertDialog from "./components/ui/dialogs/AlertDialog";
 import ConfirmDialog from "./components/ui/dialogs/ConfirmDialog";
-// 逐步测试：第二步 - 恢复 UserProfilePage
+// 所有社区和用户档案组件已恢复
 import CommunityPage from "./components/community/CommunityPage";
 import UserProfilePage from "./components/user/UserProfilePage";
-// import UserProfileModal from "./components/user/UserProfileModal";
+import UserProfileModal from "./components/user/UserProfileModal";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
 
 // Constants & Utilities
@@ -757,7 +757,8 @@ export default function App() {
         </ErrorBoundary>
       )}
 
-      {/* {showProfileModal && userProfile && (
+      {/* User Profile Modal */}
+      {showProfileModal && userProfile && (
         <UserProfileModal
           user={{ ...user, ...userProfile }}
           onClose={() => setShowProfileModal(false)}
@@ -768,7 +769,7 @@ export default function App() {
           }}
           onError={onShowAlert}
         />
-      )} */}
+      )}
     </>
   );
 }
