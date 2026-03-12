@@ -22,55 +22,10 @@ function CommunityPage({ user, onClose, onError, onShowUserProfile }) {
   const [userLikes, setUserLikes] = useState(new Set());
   const [userFavorites, setUserFavorites] = useState(new Set());
 
-  // 加载社区提示词
-  useEffect(() => {
-    fetchCommunityPrompts();
-  }, [activeTab, fetchCommunityPrompts]);
+  // ============== 函数定义 ==============
+  // 必须在 useEffect 之前定义所有函数
 
-  // 加载用户互动状态
-  useEffect(() => {
-    if (user) {
-      loadUserInteractions();
-    }
-  }, [user, prompts]);
-
-  // 过滤逻辑
-  useEffect(() => {
-    let filtered = prompts;
-
-    if (activeCategory !== "all") {
-      filtered = filtered.filter((p) => p.category_slug === activeCategory);
-    }
-
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (p) =>
-          p.title.toLowerCase().includes(query) ||
-          p.content.toLowerCase().includes(query) ||
-          p.description?.toLowerCase().includes(query) ||
-          p.tags?.some((tag) => tag.toLowerCase().includes(query))
-      );
-    }
-
-    setFilteredPrompts(filtered);
-  }, [prompts, activeCategory, searchQuery]);
-
-  // 提取唯一分类
-  useEffect(() => {
-    const categoryMap = new Map();
-    prompts.forEach((p) => {
-      if (p.category_slug && !categoryMap.has(p.category_slug)) {
-        categoryMap.set(p.category_slug, {
-          slug: p.category_slug,
-          name: p.category_name,
-        });
-      }
-    });
-    setCategories(Array.from(categoryMap.values()));
-  }, [prompts]);
-
-  const loadUserInteractions = async () => {
+  const loadUserInteractions = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -80,7 +35,7 @@ function CommunityPage({ user, onClose, onError, onShowUserProfile }) {
     } catch (error) {
       console.error("加载用户互动状态失败:", error);
     }
-  };
+  }, [user]);
 
   const fetchCommunityPrompts = useCallback(async () => {
     setLoading(true);
@@ -158,6 +113,57 @@ function CommunityPage({ user, onClose, onError, onShowUserProfile }) {
       return newSet;
     });
   }, []);
+
+  // ============== useEffect Hooks ==============
+  // 必须在所有函数定义之后
+
+  // 加载社区提示词
+  useEffect(() => {
+    fetchCommunityPrompts();
+  }, [activeTab, fetchCommunityPrompts]);
+
+  // 加载用户互动状态
+  useEffect(() => {
+    if (user) {
+      loadUserInteractions();
+    }
+  }, [user, loadUserInteractions]);
+
+  // 过滤逻辑
+  useEffect(() => {
+    let filtered = prompts;
+
+    if (activeCategory !== "all") {
+      filtered = filtered.filter((p) => p.category_slug === activeCategory);
+    }
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (p) =>
+          p.title.toLowerCase().includes(query) ||
+          p.content.toLowerCase().includes(query) ||
+          p.description?.toLowerCase().includes(query) ||
+          p.tags?.some((tag) => tag.toLowerCase().includes(query))
+      );
+    }
+
+    setFilteredPrompts(filtered);
+  }, [prompts, activeCategory, searchQuery]);
+
+  // 提取唯一分类
+  useEffect(() => {
+    const categoryMap = new Map();
+    prompts.forEach((p) => {
+      if (p.category_slug && !categoryMap.has(p.category_slug)) {
+        categoryMap.set(p.category_slug, {
+          slug: p.category_slug,
+          name: p.category_name,
+        });
+      }
+    });
+    setCategories(Array.from(categoryMap.values()));
+  }, [prompts]);
 
   const counts = useMemo(() => ({
     latest: prompts.length,
