@@ -1,6 +1,5 @@
 import { useState } from "react";
-
-const MAX_TAGS = 10;
+import { MAX_TAGS } from "../constants/app";
 
 /**
  * Custom hook for managing tag input and state

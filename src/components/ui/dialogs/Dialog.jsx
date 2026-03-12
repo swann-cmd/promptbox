@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import { TrashIcon, InfoIcon, WarningIcon, CheckIcon } from "../icons";
 
 /**
@@ -49,6 +50,19 @@ function Dialog({ isOpen, title, message, type = "info", onConfirm, onCancel, co
 
   const config = configs[type] || configs.info;
 
+  // 类型检查：确保 onConfirm 和 onCancel 是函数（如果提供）
+  const handleConfirm = () => {
+    if (typeof onConfirm === 'function') {
+      onConfirm();
+    }
+  };
+
+  const handleCancel = () => {
+    if (typeof onCancel === 'function') {
+      onCancel();
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
@@ -67,14 +81,14 @@ function Dialog({ isOpen, title, message, type = "info", onConfirm, onCancel, co
         <div className={config.showCancel ? "flex gap-3" : ""}>
           {config.showCancel && (
             <button
-              onClick={onCancel}
+              onClick={handleCancel}
               className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors ${config.cancelColor}`}
             >
               {cancelText}
             </button>
           )}
           <button
-            onClick={onConfirm}
+            onClick={handleConfirm}
             className={`${config.showCancel ? "flex-1" : "w-full"} py-2.5 rounded-xl text-white text-sm font-semibold transition-colors ${config.confirmColor}`}
           >
             {confirmText}
@@ -84,5 +98,24 @@ function Dialog({ isOpen, title, message, type = "info", onConfirm, onCancel, co
     </div>
   );
 }
+
+Dialog.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  title: PropTypes.string.isRequired,
+  message: PropTypes.string.isRequired,
+  type: PropTypes.oneOf(['info', 'success', 'warning', 'error', 'confirm']),
+  onConfirm: PropTypes.func,
+  onCancel: PropTypes.func,
+  confirmText: PropTypes.string,
+  cancelText: PropTypes.string,
+};
+
+Dialog.defaultProps = {
+  type: 'info',
+  onConfirm: null,
+  onCancel: null,
+  confirmText: '确定',
+  cancelText: '取消',
+};
 
 export default Dialog;

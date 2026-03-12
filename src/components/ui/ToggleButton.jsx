@@ -1,8 +1,7 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
 import { getToggleButtonClasses } from "../../utils/sizeClasses";
-
-const MAX_RETRIES = 2;
+import { MAX_RETRIES } from "../../constants/app";
 
 /**
  * 通用切换按钮组件
