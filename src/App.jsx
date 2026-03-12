@@ -10,9 +10,10 @@ import ImportModal from "./components/prompts/ImportModal";
 import ExportModal from "./components/prompts/ExportModal";
 import AlertDialog from "./components/ui/dialogs/AlertDialog";
 import ConfirmDialog from "./components/ui/dialogs/ConfirmDialog";
-import CommunityPage from "./components/community/CommunityPage";
-import UserProfileModal from "./components/user/UserProfileModal";
-import UserProfilePage from "./components/user/UserProfilePage";
+// 诊断：暂时注释掉社区相关导入
+// import CommunityPage from "./components/community/CommunityPage";
+// import UserProfileModal from "./components/user/UserProfileModal";
+// import UserProfilePage from "./components/user/UserProfilePage";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
 
 // Constants & Utilities
@@ -709,25 +710,24 @@ export default function App() {
 
   return (
     <>
-      {/* Community Page - render at root level so it works for both logged in and logged out users */}
-      {showCommunity && (
+      {/* 诊断：暂时注释掉社区和用户档案功能 */}
+      {/* {showCommunity && (
         <CommunityPage
           user={user}
           onClose={() => setShowCommunity(false)}
           onError={onShowAlert}
           onShowUserProfile={setSelectedUserId}
         />
-      )}
+      )} */}
 
-      {/* User Profile Page */}
-      {selectedUserId && (
+      {/* {selectedUserId && (
         <UserProfilePage
           userId={selectedUserId}
           currentUser={user}
           onClose={() => setSelectedUserId(null)}
           onError={onShowAlert}
         />
-      )}
+      )} */}
 
       {/* Alert Dialog */}
       <AlertDialog
@@ -738,7 +738,7 @@ export default function App() {
       />
 
       {!user ? (
-        <AuthPage onLogin={setUser} onShowCommunity={() => setShowCommunity(true)} />
+        <AuthPage onLogin={setUser} onShowCommunity={() => {}} />
       ) : (
         <ErrorBoundary>
           <MainApp
@@ -749,15 +749,14 @@ export default function App() {
               setUser(null);
               setUserProfile(null);
             }}
-            onShowCommunity={() => setShowCommunity(true)}
+            onShowCommunity={() => {}}
             onShowAlert={(title, message) => setAlertDialog({ isOpen: true, title, message })}
-            onShowProfileModal={() => setShowProfileModal(true)}
+            onShowProfileModal={() => {}}
           />
         </ErrorBoundary>
       )}
 
-      {/* User Profile Modal */}
-      {showProfileModal && userProfile && (
+      {/* {showProfileModal && userProfile && (
         <UserProfileModal
           user={{ ...user, ...userProfile }}
           onClose={() => setShowProfileModal(false)}
@@ -768,7 +767,7 @@ export default function App() {
           }}
           onError={onShowAlert}
         />
-      )}
+      )} */}
     </>
   );
 }
