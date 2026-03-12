@@ -91,58 +91,6 @@ function UserProfilePage({ userId, currentUser, onClose, onError }) {
     };
   }, [userId, currentUser, loadUserData, loadUserInteractions]);
 
-  const loadUserData = async () => {
-    setLoading(true);
-    try {
-      // Load profile
-      const profileData = await getOrCreateUserProfile(userId);
-      setProfile(profileData);
-
-      // Load stats
-      const statsData = await getUserProfileStats(userId);
-      setStats(statsData);
-
-      // Load prompts with profile info using RPC
-      const { data: promptsData, error: promptsError } = await supabase.rpc('get_user_prompts_with_profile', {
-        p_user_id: userId,
-        p_limit: 50,
-        p_offset: 0
-      });
-
-      if (promptsError) throw promptsError;
-
-      setPrompts((promptsData || []).map(p => ({
-        ...p,
-        is_liked: false,
-        is_favorited: false,
-      })));
-    } catch (error) {
-      console.error("加载用户数据失败:", error);
-      if (onError) onError("加载失败", error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadUserInteractions = async () => {
-    if (!currentUser) return;
-
-    try {
-      const { likedIds, favoritedIds } = await fetchUserInteractions(currentUser.id);
-      setUserLikes(likedIds);
-      setUserFavorites(favoritedIds);
-
-      // Update prompts with interaction status
-      setPrompts(prev => prev.map(p => ({
-        ...p,
-        is_liked: likedIds.has(p.id),
-        is_favorited: favoritedIds.has(p.id),
-      })));
-    } catch (error) {
-      console.error("加载用户互动状态失败:", error);
-    }
-  };
-
   const handleLikeChange = useCallback(({ communityPromptId, isLiked, likeCount }) => {
     setPrompts(prev => prev.map(p => {
       if (p.id === communityPromptId) {

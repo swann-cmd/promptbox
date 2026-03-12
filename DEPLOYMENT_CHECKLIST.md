@@ -1,9 +1,10 @@
-# 🚀 PromptBox 社区功能上线检查清单
+# 🚀 PromptBox 上线检查清单
 
 ## ✅ 代码部署状态
 
 ### 已完成
-- ✅ 代码已推送到 GitHub (commit: 618eea5)
+- ✅ 代码已推送到 GitHub (commit: c7a6f71 - 用户档案系统)
+- ✅ 代码已推送到 GitHub (commit: 618eea5 - 社区功能)
 - ✅ 本地构建测试通过
 - ✅ 所有组件已实现并测试
 
@@ -46,6 +47,36 @@
 - 输入验证
 - 复合索引优化
 - 优化的查询函数
+
+#### ✅ 迁移文件 4: 用户档案系统（新增）
+```bash
+文件: supabase/migrations/20250312_user_profile_functions.sql
+```
+
+**包含内容**：
+- 用户档案管理函数（get_or_create_user_profile, update_user_profile）
+- 用户统计函数（get_user_profile_stats）
+- 用户提示词查询函数（get_user_prompts）
+- 用户显示名称辅助函数
+
+#### ✅ 迁移文件 5: 修复 SQL 歧义（新增）
+```bash
+文件: supabase/migrations/20250312_fix_all_ambiguous_references.sql
+```
+
+**包含内容**：
+- 修复 get_or_create_user_profile 函数
+- 修复 update_user_profile 函数
+- 修复 get_user_prompts_with_profile 函数
+
+#### ✅ 迁移文件 6: 用户验证和性能优化（新增）
+```bash
+文件: supabase/migrations/20250312_add_user_validation.sql
+```
+
+**包含内容**：
+- 添加用户存在性验证
+- 添加 user_profiles 表索引
 
 **验证迁移成功**：
 ```sql
@@ -114,6 +145,23 @@ vercel --prod
 - [ ] "复制到我的库"功能正常
 - [ ] 复制后提示词出现在个人库中
 
+#### 👤 用户档案功能测试（新增）
+- [ ] 用户注册时自动创建档案记录
+- [ ] 用户登录时正确加载档案数据
+- [ ] 点击右上角头像可以编辑个人资料
+- [ ] 编辑昵称可以保存（最多50字符）
+- [ ] 编辑简介可以保存（最多500字符）
+- [ ] 添加头像链接可以保存
+- [ ] 保存后立即显示更新后的信息
+- [ ] 社区提示词显示正确的用户名称
+- [ ] 社区提示词显示用户头像
+- [ ] 点击用户名称可以进入用户主页
+- [ ] 用户主页显示用户头像和昵称
+- [ ] 用户主页显示统计数据（发布数、获赞数、复制数、浏览数）
+- [ ] 用户主页显示该用户发布的所有提示词
+- [ ] 用户主页提示词可以点击查看详情
+- [ ] 用户主页样式与首页保持一致
+
 #### 🔒 安全性测试
 - [ ] 快速连续点赞 11 次，第 11 次显示"操作过于频繁"
 - [ ] 尝试添加特殊字符标签被过滤
@@ -179,6 +227,14 @@ git push -f origin main
 
 ### 2. 数据库回滚（谨慎操作）
 ```sql
+-- 删除用户档案相关函数
+DROP FUNCTION IF EXISTS get_or_create_user_profile(UUID);
+DROP FUNCTION IF EXISTS update_user_profile(TEXT, TEXT, TEXT);
+DROP FUNCTION IF EXISTS get_user_profile_stats(UUID);
+DROP FUNCTION IF EXISTS get_user_prompts(UUID, INT, INT);
+DROP FUNCTION IF EXISTS get_user_prompts_with_profile(UUID, INT, INT);
+DROP FUNCTION IF EXISTS get_user_display_name(UUID);
+
 -- 删除社区相关表（会丢失所有社区数据）
 DROP TABLE IF EXISTS community_prompts CASCADE;
 DROP TABLE IF EXISTS community_likes CASCADE;
