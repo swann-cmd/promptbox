@@ -1,3 +1,4 @@
+import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { MAX_TAGS } from '../../constants/app';
 
@@ -12,8 +13,8 @@ export function TagInput({
   inputPlaceholder = '输入标签',
   className = '',
 }) {
-  const [tagInput, setTagInput] = React.useState('');
-  const inputRef = React.useRef(null);
+  const [tagInput, setTagInput] = useState('');
+  const inputRef = useRef(null);
 
   const handleAddTag = () => {
     const trimmed = tagInput.trim();

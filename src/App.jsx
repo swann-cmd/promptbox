@@ -204,7 +204,7 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
         console.error('加载用户档案失败:', err);
       });
     }
-  }, [user, userProfile, setUserProfile]);
+  }, [user, userProfile]); // 移除 setUserProfile，避免不必要的重渲染
 
   // 监听认证状态变化
   useEffect(() => {

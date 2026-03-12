@@ -56,8 +56,8 @@ function ExportModal({ onClose, prompts, categories, onError }) {
       link.href = URL.createObjectURL(blob);
       link.download = filename;
       link.click();
-      // 延迟释放 URL，确保下载完成
-      setTimeout(() => URL.revokeObjectURL(link.href), 100);
+      // 延迟释放 URL，确保下载完成（增加到 1 秒以适应大文件）
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 
       onClose();
     } catch (error) {

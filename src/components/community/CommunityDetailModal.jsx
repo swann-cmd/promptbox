@@ -19,12 +19,22 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
   const [withdrawing, setWithdrawing] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: "", message: "", onConfirm: null });
   const hasViewedRef = useRef(false);
+  const currentPromptIdRef = useRef(null);
 
   // 检查是否为该提示词的作者
   const isAuthor = user && user.id === prompt.user_id;
 
+  // 当 prompt.id 变化时，重置状态并更新初始值
   useEffect(() => {
-    // Prevent double counting with ref
+    if (currentPromptIdRef.current !== prompt.id) {
+      currentPromptIdRef.current = prompt.id;
+      setViewCount(prompt.view_count || 0);
+      hasViewedRef.current = false; // 重置浏览标志
+    }
+  }, [prompt.id, prompt.view_count]);
+
+  // 增加浏览次数（仅在新 prompt 首次加载时）
+  useEffect(() => {
     if (hasViewedRef.current) return;
     hasViewedRef.current = true;
 
@@ -37,12 +47,7 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
       }
     };
     incrementView();
-  }, [prompt.id]);
-
-  // 同步 prompt.view_count 的变化
-  useEffect(() => {
-    setViewCount(prompt.view_count || 0);
-  }, [prompt.view_count]);
+  }, [prompt.id]); // 只依赖 prompt.id
 
   const handleCopy = async () => {
     setCopying(true);
