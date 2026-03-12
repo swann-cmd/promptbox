@@ -234,7 +234,7 @@ function CommunityPage({ user, onClose, onError, onShowUserProfile }) {
         </div>
 
         {/* Tabs */}
-        <CommunityTabs activeTab={activeTab} onChange={setActiveTab} counts={counts} />
+        <CommunityTabs activeTab={activeTab} onChange={setActiveTab} />
 
         {/* Content */}
         {loading ? (

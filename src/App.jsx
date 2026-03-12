@@ -674,6 +674,7 @@ export default function App() {
     // 检查当前会话
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
+        // 只提取必要的用户字段，避免暴露敏感元数据
         setUser({
           id: session.user.id,
           email: session.user.email,
@@ -686,6 +687,7 @@ export default function App() {
     // 监听认证状态变化
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
+        // 只提取必要的用户字段，避免暴露敏感元数据（如 phone、confirmed_at 等）
         setUser({
           id: session.user.id,
           email: session.user.email,

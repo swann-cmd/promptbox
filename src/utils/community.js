@@ -113,10 +113,27 @@ function formatPromptData(data, publishedPromptIds = new Set()) {
 
 /**
  * Validate tag format (prevent XSS)
+ * Enhanced to handle HTML entity encoding attempts
  */
 function validateTag(tag) {
   if (typeof tag !== 'string') return false;
   if (tag.length === 0 || tag.length > 50) return false;
+
+  // Remove any HTML entities first (basic decoding)
+  const decoded = tag
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#x27;/gi, "'")
+    .replace(/&#x2F;/gi, '/')
+    .replace(/&#(\d+);/g, (match, dec) => String.fromCharCode(dec));
+
+  // Check if original tag contains HTML entities (potential attack)
+  if (tag !== decoded && /[<>]/.test(decoded)) {
+    return false; // Reject tags that decode to HTML tags
+  }
+
   // Only allow alphanumeric, Chinese characters, underscores, and hyphens
   return /^[a-zA-Z0-9\u4e00-\u9fa5_-]+$/.test(tag);
 }
