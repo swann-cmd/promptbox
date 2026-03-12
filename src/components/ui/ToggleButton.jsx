@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { getToggleButtonClasses } from "../../utils/sizeClasses";
 import { MAX_RETRIES } from "../../constants/app";
@@ -9,7 +9,7 @@ import { MAX_RETRIES } from "../../constants/app";
  * 包含乐观更新和自动重试机制
  */
 function ToggleButton({
-  icon: Icon,
+  icon,
   activeIcon,
   apiCall,
   initialState = false,
@@ -18,12 +18,20 @@ function ToggleButton({
   activeColor = "red",
   onChange,
   title,
-  ...props
 }) {
+  const IconComponent = icon;
+  const ActiveIcon = activeIcon;
   const [isActive, setIsActive] = useState(initialState);
   const [currentCount, setCurrentCount] = useState(count);
   const [loading, setLoading] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
+
+  useEffect(() => {
+    setIsActive(initialState);
+  }, [initialState]);
+
+  useEffect(() => {
+    setCurrentCount(count);
+  }, [count]);
 
   const handleClick = async () => {
     if (loading) return;
@@ -43,8 +51,8 @@ function ToggleButton({
     while (attempts < maxAttempts) {
       try {
         const data = await apiCall();
-        setIsActive(data.isLiked ?? data.isFavorited ?? data.isActive);
-        setCurrentCount(data.likeCount ?? data.count ?? currentCount);
+        setIsActive(data.isLiked ?? data.isFavorited ?? data.isActive ?? newActive);
+        setCurrentCount(data.likeCount ?? data.count ?? newCount);
 
         // 通知父组件状态变化
         if (onChange && data.isLiked !== undefined) {
@@ -54,7 +62,6 @@ function ToggleButton({
         }
 
         // 成功后重置重试计数
-        setRetryCount(0);
         break;
       } catch (error) {
         attempts++;
@@ -71,7 +78,6 @@ function ToggleButton({
         console.error("操作失败，已回滚状态");
         setIsActive(rollbackState.isActive);
         setCurrentCount(rollbackState.count);
-        setRetryCount(0);
       }
     }
 
@@ -102,10 +108,10 @@ function ToggleButton({
       } ${containerSize} ${paddingClass} ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
       title={title || (isActive ? "取消" : "确认")}
     >
-      {activeIcon ? (
-        <activeIcon filled={isActive} />
+      {ActiveIcon ? (
+        <ActiveIcon filled={isActive} />
       ) : (
-        <Icon filled={isActive} />
+        <IconComponent filled={isActive} />
       )}
       {count !== null && count !== undefined && (
         <span className="font-medium">{currentCount}</span>

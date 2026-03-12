@@ -31,7 +31,6 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
   const [prompts, setPrompts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -41,7 +40,8 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: "", message: "", onConfirm: null });
   const [showExportModal, setShowExportModal] = useState(false);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
+    if (!user?.id) return;
     try {
       const { data, error } = await supabase
         .from("categories")
@@ -132,14 +132,13 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
       }
     } catch (error) {
       console.error("加载分类失败:", error);
-      setError(error.message);
       setCategories([]);
     }
-  };
+  }, [user?.id]);
 
-  const fetchPrompts = async () => {
+  const fetchPrompts = useCallback(async () => {
+    if (!user?.id) return;
     setLoading(true);
-    setError(null);
 
     try {
       const { data, error } = await supabase
@@ -165,11 +164,10 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
       setPrompts(formatPromptData(data, publishedPromptIds));
     } catch (error) {
       console.error("加载 prompts 失败:", error);
-      setError(error.message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
 
   // ============== useEffect Hooks ==============
   // 注意：所有 useEffect 必须在函数定义之后
@@ -177,12 +175,12 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
   // 加载分类
   useEffect(() => {
     fetchCategories();
-  }, [user]);
+  }, [fetchCategories]);
 
   // 加载 prompts
   useEffect(() => {
-    if (user) fetchPrompts();
-  }, [user]);
+    fetchPrompts();
+  }, [fetchPrompts]);
 
   // 加载用户档案
   useEffect(() => {
@@ -191,7 +189,7 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
         console.error('加载用户档案失败:', err);
       });
     }
-  }, [user, userProfile]);
+  }, [user, userProfile, setUserProfile]);
 
   // 监听认证状态变化
   useEffect(() => {
@@ -202,7 +200,7 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [onLogout]);
 
   const handleCopy = async (id) => {
     try {
@@ -581,7 +579,6 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
         <ImportModal
           onClose={() => setShowImportModal(false)}
           onImport={handleImport}
-          categories={categories}
           onError={onShowAlert}
         />
       )}
@@ -627,7 +624,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showCommunity, setShowCommunity] = useState(false);
+  const [showCommunity, setShowCommunity] = useState(() => window.location.hash === '#community');
   const [alertDialog, setAlertDialog] = useState({ isOpen: false, title: "", message: "" });
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -646,7 +643,7 @@ export default function App() {
       window.location.hash = 'community';
     } else {
       if (window.location.hash === '#community') {
-        history.pushState(null, null, ' ');
+        history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
       }
     }
   }, [showCommunity]);
@@ -662,11 +659,6 @@ export default function App() {
     };
 
     window.addEventListener('hashchange', handleHashChange);
-
-    // 初始化时检查 hash
-    if (window.location.hash === '#community') {
-      setShowCommunity(true);
-    }
 
     return () => {
       window.removeEventListener('hashchange', handleHashChange);

@@ -7,7 +7,7 @@ import { CloseIcon } from "../ui/icons";
 /**
  * 发布到社区模态框
  */
-function PublishModal({ prompt, categories, onClose, onSuccess, onError }) {
+function PublishModal({ prompt, onClose, onSuccess, onError }) {
   const [description, setDescription] = useState("");
   const [publishing, setPublishing] = useState(false);
   const {
@@ -19,7 +19,6 @@ function PublishModal({ prompt, categories, onClose, onSuccess, onError }) {
     removeTag,
     handleKeyDown,
     canAddMore,
-    remaining,
   } = useTagManager();
 
   // 加载现有标签，并自动添加分类作为标签

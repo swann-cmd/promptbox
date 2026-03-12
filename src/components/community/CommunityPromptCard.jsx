@@ -5,7 +5,7 @@ import LikeButton from "./LikeButton";
 import FavoriteButton from "./FavoriteButton";
 import UserAvatar from "../user/UserAvatar";
 import { ViewIcon, CopySmallIcon, DateIcon } from "../ui/icons";
-import { copyCommunityPrompt, incrementViewCount } from "../../utils/community";
+import { copyCommunityPrompt } from "../../utils/community";
 
 /**
  * 社区提示词卡片组件
@@ -45,12 +45,7 @@ function CommunityPromptCard({
     }
   };
 
-  const handleView = async () => {
-    try {
-      await incrementViewCount(prompt.id);
-    } catch (error) {
-      console.error("更新浏览次数失败:", error);
-    }
+  const handleView = () => {
     if (onClick) onClick(prompt);
   };
 

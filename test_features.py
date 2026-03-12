@@ -6,6 +6,7 @@ PromptBox 功能测试脚本
 from playwright.sync_api import sync_playwright, expect
 import json
 import time
+import os
 
 def take_screenshot(page, name):
     """截图保存"""
@@ -19,6 +20,26 @@ def check_login_status(page):
     if page.locator('button:has-text("新增")').count() > 0:
         return True
     return False
+
+def try_login(page):
+    """尝试使用环境变量登录"""
+    test_email = os.environ.get('TEST_EMAIL')
+    test_password = os.environ.get('TEST_PASSWORD')
+    if not test_email or not test_password:
+        return False
+
+    # 仅在登录页存在时尝试
+    if page.locator('input[type="email"]').count() == 0:
+        return False
+
+    page.fill('input[type="email"]', test_email)
+    page.fill('input[type="password"]', test_password)
+    page.click('button:has-text("登录")')
+    try:
+        page.wait_for_selector('button:has-text("新增")', timeout=15000)
+        return True
+    except:
+        return False
 
 def test_export_functionality(page):
     """测试导出功能"""
@@ -327,7 +348,8 @@ def run_tests():
     print("🚀"*30)
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False)
+        headless = os.environ.get("PW_HEADLESS", "1") != "0"
+        browser = p.chromium.launch(headless=headless)
         context = browser.new_context(viewport={'width': 1280, 'height': 720})
         page = context.new_page()
 
@@ -342,16 +364,22 @@ def run_tests():
                 print("\n" + "!"*60)
                 print("⚠️  用户未登录")
                 print("!"*60)
-                print("\n请在浏览器窗口中登录，测试将自动继续...")
-                print("等待时间: 60秒\n")
+                print("\n尝试使用测试账号自动登录...")
 
-                # 等待用户登录
-                try:
-                    page.wait_for_selector('button:has-text("新增")', timeout=60000)
-                    print("\n✅ 检测到登录成功！继续测试...\n")
-                except:
-                    print("\n❌ 登录超时，退出测试")
-                    return False
+                if try_login(page):
+                    print("\n✅ 自动登录成功！继续测试...\n")
+                else:
+                    print("\n自动登录失败或未提供账号")
+                    print("请在浏览器窗口中登录，测试将自动继续...")
+                    print("等待时间: 60秒\n")
+
+                    # 等待用户登录
+                    try:
+                        page.wait_for_selector('button:has-text("新增")', timeout=60000)
+                        print("\n✅ 检测到登录成功！继续测试...\n")
+                    except:
+                        print("\n❌ 登录超时，退出测试")
+                        return False
 
             # 运行测试
             all_results = []

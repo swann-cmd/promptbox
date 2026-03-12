@@ -13,7 +13,9 @@ function FavoriteButton({ communityPromptId, initialFavorited = false, size = "m
       initialState={initialFavorited}
       size={size}
       activeColor="amber"
-      onChange={onFavoriteChange}
+      onChange={(payload) => {
+        if (onFavoriteChange) onFavoriteChange({ communityPromptId, ...payload });
+      }}
       title={initialFavorited ? "取消收藏" : "收藏"}
     />
   );

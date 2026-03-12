@@ -5,6 +5,7 @@
 
 import re
 import subprocess
+import os
 from playwright.sync_api import sync_playwright
 
 def check_code_fixes():
@@ -171,7 +172,9 @@ def test_ui_functionality():
     print("="*60)
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=False, slow_mo=300)
+        headless = os.environ.get("PW_HEADLESS", "1") != "0"
+        slow_mo = 300 if not headless else 0
+        browser = p.chromium.launch(headless=headless, slow_mo=slow_mo)
         page = browser.new_page()
 
         print("\n🌐 打开应用...")

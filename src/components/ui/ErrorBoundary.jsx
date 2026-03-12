@@ -11,7 +11,7 @@ class ErrorBoundary extends Component {
     this.state = { hasError: false, error: null, errorInfo: null };
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError() {
     return { hasError: true };
   }
 
@@ -41,7 +41,7 @@ class ErrorBoundary extends Component {
             <p className="text-sm text-gray-600 mb-6">
               应用遇到了一些问题。请刷新页面重试，如果问题持续存在，请联系支持。
             </p>
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {import.meta.env.MODE === 'development' && this.state.error && (
               <details className="text-left mb-6">
                 <summary className="text-xs font-medium text-gray-500 cursor-pointer mb-2">
                   错误详情（开发模式）

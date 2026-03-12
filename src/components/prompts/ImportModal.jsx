@@ -5,7 +5,7 @@ import { CloseIcon, UploadIcon, DownloadIcon, InfoIcon } from "../ui/icons";
 /**
  * 导入提示词模态框组件
  */
-function ImportModal({ onClose, onImport, categories, onError }) {
+function ImportModal({ onClose, onImport, onError }) {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState([]);
   const [allData, setAllData] = useState([]);
@@ -118,7 +118,6 @@ function ImportModal({ onClose, onImport, categories, onError }) {
     let currentField = "";
     let inQuotes = false;
     let lineNumber = 1;
-    let columnNumber = 1;
 
     for (let i = 0; i < text.length; i++) {
       const char = text[i];
@@ -137,7 +136,6 @@ function ImportModal({ onClose, onImport, categories, onError }) {
         // Field separator
         currentLine.push(currentField);
         currentField = "";
-        columnNumber++;
       } else if (char === "\n" && !inQuotes) {
         // Line separator
         currentLine.push(currentField);
@@ -147,7 +145,6 @@ function ImportModal({ onClose, onImport, categories, onError }) {
         currentLine = [];
         currentField = "";
         lineNumber++;
-        columnNumber = 1;
       } else if (char === "\r" && nextChar === "\n" && !inQuotes) {
         // Windows line separator
         currentLine.push(currentField);
@@ -157,7 +154,6 @@ function ImportModal({ onClose, onImport, categories, onError }) {
         currentLine = [];
         currentField = "";
         lineNumber++;
-        columnNumber = 1;
         i++;
       } else if (char !== "\r") {
         // 忽略单独的 \r 字符

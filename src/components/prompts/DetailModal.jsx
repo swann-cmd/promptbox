@@ -10,19 +10,33 @@ import { useTagManager, MAX_TAGS } from "../../hooks/useTagManager";
 /**
  * 提示词详情模态框组件
  */
-function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPublishSuccess, categories, models, onError, user }) {
-  if (!initialPrompt) return null;
+function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPublishSuccess, categories, models, onError }) {
+  const hasPrompt = Boolean(initialPrompt);
+  const safePrompt = initialPrompt || {
+    id: "",
+    title: "",
+    content: "",
+    categoryId: "",
+    categorySlug: "",
+    categoryName: "",
+    model: "",
+    tags: [],
+    usageCount: 0,
+    createdAt: "",
+    updatedAt: "",
+    isPublishedToCommunity: false,
+  };
 
   const [isEditing, setIsEditing] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
-  const [prompt, setPrompt] = useState(initialPrompt);
+  const [prompt, setPrompt] = useState(safePrompt);
   const [alertDialog, setAlertDialog] = useState({ isOpen: false, title: "", message: "", type: "warning" });
   const [form, setForm] = useState({
-    title: prompt.title,
-    content: prompt.content,
-    categoryId: prompt.categoryId,
-    model: prompt.model,
-    tags: prompt.tags || []
+    title: safePrompt.title,
+    content: safePrompt.content,
+    categoryId: safePrompt.categoryId,
+    model: safePrompt.model,
+    tags: safePrompt.tags || []
   });
   const [saving, setSaving] = useState(false);
 
@@ -35,7 +49,7 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
     removeTag,
     handleKeyDown,
     canAddMore,
-  } = useTagManager(prompt.tags || []);
+  } = useTagManager(safePrompt.tags || []);
 
   // 同步 tag 状态到 form
   useEffect(() => {
@@ -44,7 +58,9 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
 
   // 当 initialPrompt 变化时，同步本地 prompt 状态
   useEffect(() => {
-    setPrompt(initialPrompt);
+    if (initialPrompt) {
+      setPrompt(initialPrompt);
+    }
   }, [initialPrompt]);
 
   // 当 prompt 更新时，同步表单数据
@@ -57,6 +73,8 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
       tags: prompt.tags || []
     });
   }, [prompt.id, prompt.title, prompt.content, prompt.categoryId, prompt.model, prompt.tags]);
+
+  if (!hasPrompt) return null;
 
   const handleSave = async () => {
     if (!form.title.trim() || !form.content.trim()) return;
@@ -326,9 +344,8 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
       {showPublishModal && (
         <PublishModal
           prompt={prompt}
-          categories={categories}
           onClose={() => setShowPublishModal(false)}
-          onSuccess={(communityPromptId) => {
+          onSuccess={() => {
             setShowPublishModal(false);
             // 更新 prompt 的发布状态
             setPrompt(prev => ({ ...prev, isPublishedToCommunity: true }));

@@ -101,7 +101,7 @@ function UserProfilePage({ userId, currentUser, onClose, onError }) {
     };
   }, [userId, currentUser, loadUserData, loadUserInteractions]);
 
-  const handleLikeChange = useCallback(({ communityPromptId, isLiked, likeCount }) => {
+  const handleLikeChange = useCallback(({ communityPromptId, likeCount }) => {
     setPrompts(prev => prev.map(p => {
       if (p.id === communityPromptId) {
         return { ...p, like_count: likeCount };

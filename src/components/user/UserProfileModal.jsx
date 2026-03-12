@@ -11,7 +11,7 @@ const isValidUrl = (string) => {
   try {
     new URL(string);
     return true;
-  } catch (_) {
+  } catch {
     return false;
   }
 };
@@ -25,7 +25,6 @@ function UserProfileModal({ user, onClose, onUpdate, onError }) {
     bio: user.bio || "",
     avatarUrl: user.avatar_url || ""
   });
-  const [avatarPreviewError, setAvatarPreviewError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {
@@ -152,7 +151,7 @@ function UserProfileModal({ user, onClose, onUpdate, onError }) {
           {form.avatarUrl && (
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
               <UserAvatar
-                src={avatarPreviewError ? null : form.avatarUrl}
+                src={form.avatarUrl}
                 alt={form.displayName || "预览"}
                 size="lg"
               />

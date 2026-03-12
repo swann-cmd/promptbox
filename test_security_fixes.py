@@ -6,13 +6,16 @@
 
 from playwright.sync_api import sync_playwright
 import time
+import os
 
 def test_security_fixes():
     """测试所有安全修复功能"""
 
     with sync_playwright() as p:
-        # 启动浏览器（非 headless 模式以便观察）
-        browser = p.chromium.launch(headless=False, slow_mo=500)
+        # 启动浏览器（默认 headless，允许用环境变量覆盖）
+        headless = os.environ.get("PW_HEADLESS", "1") != "0"
+        slow_mo = 500 if not headless else 0
+        browser = p.chromium.launch(headless=headless, slow_mo=slow_mo)
         page = browser.new_page()
 
         print("🌐 打开应用...")
@@ -59,8 +62,10 @@ def test_security_fixes():
 
         # 先需要登录（测试账号）
         print("🔐 尝试登录...")
-        page.fill('input[type="email"]', 'test@example.com')
-        page.fill('input[type="password"]', 'test123456')
+        test_email = os.environ.get('TEST_EMAIL', 'test@example.com')
+        test_password = os.environ.get('TEST_PASSWORD', 'test123456')
+        page.fill('input[type="email"]', test_email)
+        page.fill('input[type="password"]', test_password)
         page.click('button:has-text("登录")')
 
         # 等待登录或错误

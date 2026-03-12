@@ -14,7 +14,9 @@ function LikeButton({ communityPromptId, initialLiked = false, initialLikeCount 
       count={initialLikeCount}
       size={size}
       activeColor="red"
-      onChange={onLikeChange}
+      onChange={(payload) => {
+        if (onLikeChange) onLikeChange({ communityPromptId, ...payload });
+      }}
       title={initialLiked ? "取消点赞" : "点赞"}
     />
   );

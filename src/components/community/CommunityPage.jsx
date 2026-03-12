@@ -94,7 +94,7 @@ function CommunityPage({ user, onClose, onError, onShowUserProfile }) {
     }
   }, [activeTab, onError]);
 
-  const handleLikeChange = useCallback(({ communityPromptId, isLiked, likeCount }) => {
+  const handleLikeChange = useCallback(({ communityPromptId, likeCount }) => {
     setPrompts(prev => prev.map(p =>
       p.id === communityPromptId ? { ...p, like_count: likeCount } : p
     ));
