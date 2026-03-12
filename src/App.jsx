@@ -20,7 +20,7 @@ import { DEFAULT_CATEGORIES } from "./constants/categories";
 import { MODELS, APP_FONT } from "./constants/app";
 import { validatePrompt } from "./utils/validation";
 import { sanitizeInput } from "./utils/sanitize";
-import { formatPromptData, getOrCreateUserProfile } from "./utils/community";
+import { formatPromptData } from "./utils/community";
 
 // Icons
 import { LogoIcon, CloseIcon, PlusIcon, UploadIcon, DownloadIcon, SearchIcon, LoadingSpinner, EmptyStateIcon, CommunityIcon } from "./components/ui/icons";
