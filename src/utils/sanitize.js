@@ -83,5 +83,7 @@ export function sanitizeHTML(html, allowedTags = ['p', 'br', 'strong', 'em', 'u'
     ALLOWED_TAGS: allowedTags,
     ALLOWED_ATTR: ['href', 'title', 'target'],
     ALLOW_DATA_ATTR: false,
+    // 只允许安全协议：https?, http?, mailto:, tel:
+    ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
   });
 }

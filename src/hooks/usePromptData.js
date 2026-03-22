@@ -124,6 +124,16 @@ export function usePromptData(userId) {
         .filter(tag => tag.length > 0)
         .slice(0, 10);
 
+      // 查询社区发布状态（避免竞态条件）
+      const { data: communityData } = await supabase
+        .from("community_prompts")
+        .select("id, status")
+        .eq("prompt_id", id)
+        .eq("status", "published")
+        .single();
+
+      const isPublishedToCommunity = !!communityData;
+
       // 更新数据库
       const { data, error } = await supabase
         .from("prompts")
@@ -143,9 +153,6 @@ export function usePromptData(userId) {
 
       if (error) throw error;
 
-      // 保留原有的发布状态
-      const existingPrompt = prompts.find(p => p.id === id);
-
       const updatedPrompt = {
         id: data.id,
         title: data.title,
@@ -157,8 +164,15 @@ export function usePromptData(userId) {
         tags: data.tags || [],
         usageCount: data.usage_count,
         createdAt: data.created_at,
-        isPublishedToCommunity: existingPrompt?.isPublishedToCommunity || false
+        isPublishedToCommunity
       };
+
+      // 保存旧状态以便错误时回滚
+      let previousPrompt = null;
+      setPrompts(prev => {
+        previousPrompt = prev.find(p => p.id === id);
+        return prev; // 只读取，不修改
+      });
 
       // 乐观更新本地状态
       setPrompts(prev => prev.map(p => p.id === id ? updatedPrompt : p));
@@ -166,9 +180,13 @@ export function usePromptData(userId) {
       return { success: true, prompt: updatedPrompt };
     } catch (err) {
       console.error("更新失败:", err);
+      // 回滚乐观更新
+      if (previousPrompt) {
+        setPrompts(prev => prev.map(p => p.id === id ? previousPrompt : p));
+      }
       throw err;
     }
-  }, [userId, prompts]);
+  }, [userId]);
 
   /**
    * 删除提示词
@@ -200,6 +218,16 @@ export function usePromptData(userId) {
    * 增加使用计数（复制时调用）
    */
   const incrementUsage = useCallback(async (id) => {
+    // 先获取当前计数（避免闭包陷阱）
+    let currentCount = 0;
+    setPrompts(prev => {
+      const prompt = prev.find(p => p.id === id);
+      currentCount = prompt ? prompt.usageCount : 0;
+      return prev; // 不修改状态，只读取
+    });
+
+    const newCount = currentCount + 1;
+
     try {
       // 尝试调用 RPC 函数
       const { error } = await supabase.rpc("increment_usage_count", { prompt_id: id });
@@ -214,13 +242,13 @@ export function usePromptData(userId) {
         p.id === id ? { ...p, usageCount: p.usageCount + 1 } : p
       ));
 
-      return { success: true, usageCount: (prompts.find(p => p.id === id)?.usageCount || 0) + 1 };
+      return { success: true, usageCount: newCount };
     } catch (err) {
       console.error("更新使用计数失败:", err);
       // 即使失败也不影响用户复制操作，静默处理
-      return { success: true, usageCount: prompts.find(p => p.id === id)?.usageCount || 0 };
+      return { success: true, usageCount: currentCount };
     }
-  }, [prompts]);
+  }, []);
 
   // 初始加载
   useEffect(() => {

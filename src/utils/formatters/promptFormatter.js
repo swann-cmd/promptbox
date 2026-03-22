@@ -6,6 +6,12 @@
 
 /**
  * 格式化标签验证函数（防止 XSS）
+ * 使用白名单方法，拒绝所有包含 HTML 实体的标签
+ *
+ * SECURITY WARNING: This is client-side validation only.
+ * Malicious users can bypass this by making direct API calls or modifying client code.
+ * TODO: Add database-level validation (check constraint or trigger) for defense in depth.
+ *
  * @param {string} tag - 待验证的标签
  * @returns {boolean} 是否为有效标签
  */
@@ -13,22 +19,20 @@ function validateTag(tag) {
   if (typeof tag !== 'string') return false;
   if (tag.length === 0 || tag.length > 50) return false;
 
-  // 移除 HTML 实体编码（基础解码）
-  const decoded = tag
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/&amp;/gi, '&')
-    .replace(/&quot;/gi, '"')
-    .replace(/&#x27;/gi, "'")
-    .replace(/&#x2F;/gi, '/')
-    .replace(/&#(\d+);/g, (match, dec) => String.fromCharCode(dec));
+  // 检查是否包含任何 HTML 实体编码模式（包括变体）
+  // 匹配：&#123; &#x1F; &lt; &gt; &amp; 等
+  const hasEntities = /&(?:#\d+|#x[\da-fA-F]+|[a-zA-Z]+);/.test(tag);
 
-  // 检查原始标签是否包含 HTML 实体（潜在攻击）
-  if (tag !== decoded && /[<>]/.test(decoded)) {
-    return false; // 拒绝解码后包含 HTML 标签的标签
+  if (hasEntities) {
+    return false; // 拒绝任何包含 HTML 实体的标签
   }
 
-  // 只允许字母数字、中文、下划线和连字符
+  // 检查是否包含危险字符
+  if (/[<>"]/.test(tag)) {
+    return false;
+  }
+
+  // 只允许字母数字、中文、下划线和连字符（白名单方法）
   return /^[a-zA-Z0-9\u4e00-\u9fa5_-]+$/.test(tag);
 }
 
