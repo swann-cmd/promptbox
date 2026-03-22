@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { Analytics } from '@vercel/analytics/react';
 import { supabase } from "./lib/supabase";
 
 // Components - 使用新的 hooks 和组件
@@ -462,6 +463,9 @@ export default function App() {
           onError={onShowAlert}
         />
       )}
+      
+      {/* Vercel Web Analytics */}
+      <Analytics />
     </>
   );
 }
