@@ -5,10 +5,11 @@ import { CheckSmallIcon, CopyIcon } from "./icons";
  * 复制按钮组件
  * @param {string} text - 要复制的文本
  * @param {Function} onCopy - 复制成功后的回调
+ * @param {Function} onError - 复制失败时的回调
  * @param {string} size - 按钮尺寸 ("sm" | "lg")
  * @param {boolean} disabled - 是否禁用
  */
-function CopyButton({ text, onCopy, size = "sm", disabled = false }) {
+function CopyButton({ text, onCopy, onError, size = "sm", disabled = false }) {
   const [copied, setCopied] = useState(false);
   const timeoutRef = useRef(null);
 
@@ -16,6 +17,11 @@ function CopyButton({ text, onCopy, size = "sm", disabled = false }) {
     if (disabled) return;
 
     try {
+      // 检查是否支持 clipboard API
+      if (!navigator.clipboard || !navigator.clipboard.writeText) {
+        throw new Error("当前浏览器不支持复制功能");
+      }
+
       await navigator.clipboard.writeText(text);
       setCopied(true);
       if (onCopy) await onCopy();
@@ -28,6 +34,39 @@ function CopyButton({ text, onCopy, size = "sm", disabled = false }) {
       timeoutRef.current = setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error("复制失败:", error);
+
+      // 尝试使用 fallback 方法
+      try {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.opacity = "0";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        const successful = document.execCommand("copy");
+        document.body.removeChild(textArea);
+
+        if (successful) {
+          setCopied(true);
+          if (onCopy) await onCopy();
+
+          if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+          }
+
+          timeoutRef.current = setTimeout(() => setCopied(false), 2000);
+          return;
+        }
+      } catch (fallbackError) {
+        console.error("Fallback 复制也失败:", fallbackError);
+      }
+
+      // 两种方法都失败，通知用户
+      if (onError) {
+        onError("复制失败", error.message || "无法复制到剪贴板，请手动复制");
+      }
     }
   };
 

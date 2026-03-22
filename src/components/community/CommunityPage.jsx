@@ -3,7 +3,7 @@ import { supabase } from "../../lib/supabase";
 import CommunityPromptCard from "./CommunityPromptCard";
 import CommunityTabs from "./CommunityTabs";
 import CommunityDetailModal from "./CommunityDetailModal";
-import { SearchIcon, LoadingSpinner, EmptyStateIcon } from "../ui/icons";
+import { SearchIcon, LoadingSpinner, EmptyStateIcon, CloseIcon } from "../ui/icons";
 import { SearchInput, LoadingState, EmptyState } from "../ui";
 import { formatCommunityPromptData, fetchUserInteractions } from "../../utils/community";
 import { COMMUNITY_MAX_PROMPTS, COMMUNITY_TAB } from "../../constants/community";

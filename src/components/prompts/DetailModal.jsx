@@ -349,47 +349,52 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
         {/* Footer */}
         {!isEditing && (
           <div className="px-4 sm:px-6 pb-4 sm:pb-6 pt-3 border-t border-gray-50 flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1.5 text-xs text-gray-400">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 sm:gap-4">
+                <div className="flex items-center gap-1 text-xs text-gray-400">
                   <UsageIcon />
-                  使用 <span className="font-semibold text-gray-600">{prompt.usageCount}</span> 次
+                  <span className="hidden sm:inline">使用</span> <span className="font-semibold text-gray-600">{prompt.usageCount}</span><span className="hidden sm:inline"> 次</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                <div className="hidden sm:flex items-center gap-1.5 text-xs text-gray-400">
                   <DateIcon />
                   {new Date(prompt.createdAt).toLocaleDateString("zh-CN")}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 {prompt.isPublishedToCommunity ? (
                   <>
                     <button
                       onClick={handleWithdraw}
                       disabled={withdrawing}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex items-center justify-center px-2 py-1.5 sm:px-4 sm:py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       title="撤回发布"
                     >
                       <UndoIcon />
-                      <span>{withdrawing ? "撤回中..." : "撤回"}</span>
+                      <span className="hidden sm:inline">{withdrawing ? "撤回中..." : "撤回"}</span>
                     </button>
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-600 text-xs font-medium rounded-lg border border-green-200">
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <div className="flex items-center gap-2 px-2 py-1.5 sm:px-4 sm:py-2.5 bg-green-50 text-green-600 text-sm font-medium rounded-xl border border-green-200">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
-                      <span>已发布</span>
+                      <span className="hidden sm:inline">已发布</span>
                     </div>
                   </>
                 ) : (
                   <button
                     onClick={() => setShowPublishModal(true)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-xs font-medium rounded-lg transition-all shadow-sm shadow-purple-200"
+                    className="flex items-center gap-1 px-2 py-1.5 sm:px-4 sm:py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm font-medium rounded-xl transition-all shadow-sm shadow-purple-200"
                     title="发布到社区"
                   >
                     <CommunityIcon />
-                    <span>发布到社区</span>
+                    <span className="hidden sm:inline">发布到社区</span>
                   </button>
                 )}
-                <CopyButton text={prompt.content} onCopy={() => onCopy(prompt.id)} size="lg" />
+                <CopyButton
+                  text={prompt.content}
+                  onCopy={() => onCopy(prompt.id)}
+                  onError={(title, message) => onError(title, message)}
+                  size="lg"
+                />
               </div>
             </div>
           </div>

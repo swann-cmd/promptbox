@@ -6,7 +6,7 @@ import LikeButton from "./LikeButton";
 import FavoriteButton from "./FavoriteButton";
 import UserAvatar from "../user/UserAvatar";
 import ModalWrapper from "../ui/ModalWrapper";
-import { ViewIcon, CopySmallIcon, DateIcon, ChevronRightIcon } from "../ui/icons";
+import { CloseIcon, ViewIcon, CopySmallIcon, DateIcon, ChevronRightIcon } from "../ui/icons";
 import { copyCommunityPrompt, incrementViewCount, withdrawCommunityPrompt } from "../../utils/community";
 import Dialog from "../ui/dialogs/Dialog";
 
@@ -101,10 +101,11 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
         isOpen={true}
         onClose={onClose}
         size="lg"
+        showHeader={false}
       >
         {/* Custom header content */}
-        <div className="px-6 pt-6 pb-4 -mt-2 -mx-6">
-          <div className="flex items-start justify-between gap-4 mb-2.5">
+        <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-4 border-b border-gray-50">
+          <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <h2 className="text-lg font-semibold text-gray-900 leading-snug mb-2.5">
                 {prompt.title}
@@ -119,6 +120,12 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
                 </span>
               </div>
             </div>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+            >
+              <CloseIcon />
+            </button>
           </div>
 
           {/* Author Info */}
@@ -147,7 +154,7 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
 
         {/* Description */}
         {prompt.description && (
-          <div className="px-6 py-4 bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100 -mx-6">
+          <div className="px-4 sm:px-6 py-4 bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100">
             <p className="text-sm text-gray-700 leading-relaxed">
               {prompt.description}
             </p>
@@ -155,7 +162,7 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
         )}
 
         {/* Content */}
-        <div className="px-6 py-5 overflow-y-auto -mx-6" style={{ maxHeight: "calc(85vh - 320px)" }}>
+        <div className="px-4 sm:px-6 py-5 overflow-y-auto" style={{ maxHeight: "calc(85vh - 320px)" }}>
           <div className="bg-gray-50 rounded-2xl p-4">
             <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
               {prompt.content}
@@ -178,24 +185,24 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
         </div>
 
         {/* Footer */}
-        <div className="px-6 pb-6 pt-3 border-t border-gray-50 -mx-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1.5 text-xs text-gray-400">
+        <div className="px-4 sm:px-6 pb-4 sm:pb-6 pt-3 border-t border-gray-50">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div className="flex items-center gap-1 text-xs text-gray-400">
                 <ViewIcon />
-                <span>浏览 {viewCount}</span>
+                <span className="hidden sm:inline">浏览</span> {viewCount}
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-gray-400">
+              <div className="flex items-center gap-1 text-xs text-gray-400">
                 <CopySmallIcon />
-                <span>复制 {prompt.copy_count || 0}</span>
+                <span className="hidden sm:inline">复制</span> {prompt.copy_count || 0}
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-gray-400">
+              <div className="hidden sm:flex items-center gap-1.5 text-xs text-gray-400">
                 <DateIcon />
                 <span>{new Date(prompt.published_at).toLocaleDateString("zh-CN")}</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <LikeButton
                 communityPromptId={prompt.id}
                 initialLiked={userLikes.has(prompt.id)}
@@ -211,18 +218,23 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
                 <button
                   onClick={handleWithdraw}
                   disabled={withdrawing}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center justify-center px-2 py-1.5 sm:px-3 sm:py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="撤回发布"
                 >
-                  <span>{withdrawing ? "撤回中..." : "撤回发布"}</span>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                  </svg>
+                  <span className="hidden sm:inline">{withdrawing ? "撤回中..." : "撤回"}</span>
                 </button>
               )}
               <button
                 onClick={handleCopy}
                 disabled={copying}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-blue-200"
+                className="flex items-center gap-1 px-2 py-1.5 sm:px-3 sm:py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-blue-200"
+                title={user ? "复制到我的库" : "复制内容"}
               >
                 <CopySmallIcon />
-                <span>{copying ? "复制中..." : (user ? "复制到我的库" : "复制内容")}</span>
+                <span className="hidden sm:inline">{copying ? "复制中..." : (user ? "复制" : "复制")}</span>
               </button>
             </div>
           </div>

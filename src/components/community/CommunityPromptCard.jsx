@@ -99,42 +99,40 @@ function CommunityPromptCard({
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-3 border-t border-gray-50">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-50">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           {/* Author */}
           <button
             onClick={(e) => {
               e.stopPropagation();
               if (onShowUserProfile) onShowUserProfile(prompt.user_id);
             }}
-            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
           >
             <UserAvatar
               src={prompt.user_avatar_url}
               alt={prompt.user_display_name}
               size="sm"
             />
-            <span className="max-w-[80px] truncate">
+            <span className="max-w-[60px] sm:max-w-[80px] truncate">
               {prompt.user_display_name || "匿名用户"}
             </span>
           </button>
 
-          {/* Stats */}
-          <div className="flex items-center gap-1.5 text-xs text-gray-400">
-            <ViewIcon />
-            <span>{prompt.view_count || 0}</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-gray-400">
-            <CopySmallIcon />
-            <span>{prompt.copy_count || 0}</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-gray-400">
-            <DateIcon />
-            <span>{new Date(prompt.published_at).toLocaleDateString("zh-CN")}</span>
+          {/* Stats - hide on very small screens */}
+          <div className="hidden sm:flex items-center gap-2">
+            <div className="flex items-center gap-1 text-xs text-gray-400">
+              <ViewIcon />
+              <span>{prompt.view_count || 0}</span>
+            </div>
+            <div className="flex items-center gap-1 text-xs text-gray-400">
+              <CopySmallIcon />
+              <span>{prompt.copy_count || 0}</span>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
           <LikeButton
             communityPromptId={prompt.id}
             initialLiked={prompt.is_liked || false}
@@ -151,11 +149,11 @@ function CommunityPromptCard({
           <button
             onClick={handleCopy}
             disabled={copying}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-1 px-2 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             title={user ? "复制到我的库" : "复制提示词内容"}
           >
             <CopySmallIcon />
-            <span>{copying ? "复制中..." : "复制"}</span>
+            <span className="hidden sm:inline">{copying ? "复制中..." : "复制"}</span>
           </button>
         </div>
       </div>

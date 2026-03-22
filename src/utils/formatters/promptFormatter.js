@@ -15,7 +15,7 @@
  * @param {string} tag - 待验证的标签
  * @returns {boolean} 是否为有效标签
  */
-function validateTag(tag) {
+export function validateTag(tag) {
   if (typeof tag !== 'string') return false;
   if (tag.length === 0 || tag.length > 50) return false;
 

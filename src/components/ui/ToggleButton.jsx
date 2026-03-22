@@ -101,7 +101,7 @@ function ToggleButton({
     <button
       onClick={handleClick}
       disabled={loading}
-      className={`flex items-center justify-center rounded-lg transition-all duration-200 ${
+      className={`inline-flex items-center rounded-lg transition-all duration-200 ${
         isActive
           ? colorClasses[activeColor].active
           : colorClasses[activeColor].inactive
@@ -114,7 +114,7 @@ function ToggleButton({
         <IconComponent filled={isActive} />
       )}
       {count !== null && count !== undefined && (
-        <span className="font-medium">{currentCount}</span>
+        <span className="font-semibold">{currentCount}</span>
       )}
     </button>
   );

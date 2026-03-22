@@ -18,10 +18,10 @@ export const avatarSizeClasses = {
  * Maps size prop to container and padding classes
  */
 export const toggleButtonSizeClasses = {
-  sm: "w-7 h-7 text-xs",
+  sm: "w-auto h-7 text-xs min-w-[2rem]",
   sm_padding: "px-2 py-1 text-xs gap-1",
-  md: "w-8 h-8 text-sm",
-  md_padding: "px-2.5 py-1.5 text-xs gap-1.5",
+  md: "w-auto h-8 text-sm min-w-[2.5rem]",
+  md_padding: "px-2.5 py-1.5 text-sm gap-1.5",
   lg: "w-9 h-9 text-base",
   lg_padding: "px-3 py-1.5 text-sm gap-1.5"
 };
