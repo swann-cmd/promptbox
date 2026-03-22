@@ -118,5 +118,43 @@ git push
 
 ## 📚 参考资源
 
+### 工作流文档
+- [CODE_QUALITY_WORKFLOW.md](./CODE_QUALITY_WORKFLOW.md) - **代码质量工作流**（何时审核、何时简化）
+- [TESTING_WORKFLOW.md](./TESTING_WORKFLOW.md) - 测试工作流
+- [CLAUDE.md](./CLAUDE.md) - AI 辅助开发说明
+
+### 外部资源
 - [Vercel 预览部署文档](https://vercel.com/docs/deployments/preview-deployments)
-- [Git 分支最佳实践](https://www.atlassian.com/git/tutorials/comparing-workflows/feature-branch-workflow)
+- [Git 分支最佳实践](https://www.atlassian.org/git/tutorials/comparing-workflows/feature-branch-workflow)
+
+---
+
+## 🎯 快速参考
+
+### 代码质量检查清单
+
+```bash
+# 1. 开发前
+git checkout -b feature/your-feature
+
+# 2. 开发中
+npm test        # 保持测试通过
+npm run lint    # 检查代码规范
+
+# 3. 提交前
+git diff --stat # 查看改动量
+# 如果改动 > 200 行，考虑先简化
+
+# 4. 代码审核（重要！）
+# 涉及以下内容必须审核：
+# ✅ 数据库操作
+# ✅ 用户输入处理
+# ✅ 权限控制
+# ✅ 支付认证
+# 详见 CODE_QUALITY_WORKFLOW.md
+
+# 5. 提交
+git add .
+git commit -m "清晰的提交信息"
+git push-feature your-feature
+```
