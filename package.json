@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.48.1",
+    "@vercel/analytics": "^2.0.1",
     "date-fns": "^4.1.0",
     "dompurify": "^3.3.3",
     "p-retry": "^7.1.1",
