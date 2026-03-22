@@ -47,8 +47,7 @@ function CommunityPage({ user, onClose, onError, onShowUserProfile }) {
       if (activeTab === "latest") {
         query = query.order("created_at", { ascending: false });
       } else {
-        query = query.order("like_count", { ascending: false })
-          .order("copy_count", { ascending: false });
+        query = query.order("view_count", { ascending: false });
       }
 
       query = query.limit(COMMUNITY_MAX_PROMPTS);
