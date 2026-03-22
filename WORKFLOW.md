@@ -119,6 +119,8 @@ git push
 ## 📚 参考资源
 
 ### 工作流文档
+- [VISUAL_WORKFLOW.md](./VISUAL_WORKFLOW.md) - **可视化工作流**（Mermaid 流程图）
+- [QUICK_REFERENCE.md](./QUICK_REFERENCE.md) - **快速参考**（打印版工作流）
 - [CODE_QUALITY_WORKFLOW.md](./CODE_QUALITY_WORKFLOW.md) - **代码质量工作流**（何时审核、何时简化）
 - [TESTING_WORKFLOW.md](./TESTING_WORKFLOW.md) - 测试工作流
 - [CLAUDE.md](./CLAUDE.md) - AI 辅助开发说明
