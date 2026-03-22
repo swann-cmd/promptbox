@@ -4,13 +4,14 @@ import CategoryBadge from "../ui/CategoryBadge";
 import CopyButton from "../ui/CopyButton";
 import PublishModal from "../community/PublishModal";
 import AlertDialog from "../ui/dialogs/AlertDialog";
-import { CloseIcon, EditIcon, UsageIcon, DateIcon, CommunityIcon } from "../ui/icons";
+import { CloseIcon, EditIcon, UsageIcon, DateIcon, CommunityIcon, UndoIcon } from "../ui/icons";
 import { useTagManager, MAX_TAGS } from "../../hooks/useTagManager";
+import { withdrawCommunityPrompt } from "../../utils/community";
 
 /**
  * 提示词详情模态框组件
  */
-function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPublishSuccess, categories, models, onError }) {
+function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPublishSuccess, onWithdrawSuccess, categories, models, onError }) {
   const hasPrompt = Boolean(initialPrompt);
   const safePrompt = initialPrompt || {
     id: "",
@@ -29,6 +30,7 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
 
   const [isEditing, setIsEditing] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
+  const [withdrawing, setWithdrawing] = useState(false);
   const [prompt, setPrompt] = useState(safePrompt);
   const [alertDialog, setAlertDialog] = useState({ isOpen: false, title: "", message: "", type: "warning" });
   const [form, setForm] = useState({
@@ -105,18 +107,61 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
     setIsEditing(false);
   };
 
+  const handleWithdraw = async () => {
+    if (!prompt.communityPromptId) {
+      setAlertDialog({
+        isOpen: true,
+        title: "无法撤回",
+        message: "该提示词未发布到社区或缺少社区ID",
+        type: "error"
+      });
+      return;
+    }
+
+    setWithdrawing(true);
+    try {
+      await withdrawCommunityPrompt(prompt.communityPromptId);
+
+      // 更新本地状态
+      setPrompt(prev => ({
+        ...prev,
+        isPublishedToCommunity: false,
+        communityPromptId: null
+      }));
+
+      // 刷新列表以更新所有提示词的发布状态
+      if (onWithdrawSuccess) onWithdrawSuccess();
+
+      setAlertDialog({
+        isOpen: true,
+        title: "撤回成功",
+        message: "您的提示词已从社区广场撤回",
+        type: "success"
+      });
+    } catch (error) {
+      console.error("撤回失败:", error);
+      setAlertDialog({
+        isOpen: true,
+        title: "撤回失败",
+        message: error.message || "撤回发布失败，请稍后重试",
+        type: "error"
+      });
+    } finally {
+      setWithdrawing(false);
+    }
+  };
+
   return (
     <div
-      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden"
+        className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden max-h-[90vh] sm:max-h-[85vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxHeight: "85vh" }}
       >
         {/* Header */}
-        <div className="px-6 pt-6 pb-4 border-b border-gray-50">
+        <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b border-gray-50 flex-shrink-0">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               {isEditing ? (
@@ -211,7 +256,7 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
         </div>
 
         {/* Content */}
-        <div className="px-6 py-5 overflow-y-auto" style={{ maxHeight: "calc(85vh - 200px)" }}>
+        <div className="px-4 sm:px-6 py-4 sm:py-5 overflow-y-auto flex-1">
           {isEditing ? (
             <div className="space-y-4">
               <textarea
@@ -303,7 +348,7 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
 
         {/* Footer */}
         {!isEditing && (
-          <div className="px-6 pb-6 pt-3 border-t border-gray-50">
+          <div className="px-4 sm:px-6 pb-4 sm:pb-6 pt-3 border-t border-gray-50 flex-shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1.5 text-xs text-gray-400">
@@ -317,12 +362,23 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
               </div>
               <div className="flex items-center gap-2">
                 {prompt.isPublishedToCommunity ? (
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-600 text-xs font-medium rounded-lg border border-green-200">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>已发布到社区</span>
-                  </div>
+                  <>
+                    <button
+                      onClick={handleWithdraw}
+                      disabled={withdrawing}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="撤回发布"
+                    >
+                      <UndoIcon />
+                      <span>{withdrawing ? "撤回中..." : "撤回"}</span>
+                    </button>
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-600 text-xs font-medium rounded-lg border border-green-200">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span>已发布</span>
+                    </div>
+                  </>
                 ) : (
                   <button
                     onClick={() => setShowPublishModal(true)}
@@ -395,11 +451,13 @@ DetailModal.propTypes = {
     createdAt: PropTypes.string.isRequired,
     updatedAt: PropTypes.string.isRequired,
     isPublishedToCommunity: PropTypes.bool,
+    communityPromptId: PropTypes.string,
   }),
   onClose: PropTypes.func.isRequired,
   onCopy: PropTypes.func.isRequired,
   onUpdate: PropTypes.func.isRequired,
   onPublishSuccess: PropTypes.func,
+  onWithdrawSuccess: PropTypes.func,
   categories: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.string.isRequired,
     name: PropTypes.string.isRequired,
@@ -415,6 +473,7 @@ DetailModal.propTypes = {
 DetailModal.defaultProps = {
   prompt: null,
   onPublishSuccess: null,
+  onWithdrawSuccess: null,
   user: null,
 };
 

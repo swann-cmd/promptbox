@@ -5,6 +5,7 @@
 // Query limits
 export const COMMUNITY_PROMPTS_LIMIT = 50;
 export const COMMUNITY_PROMPTS_INITIAL_LIMIT = 20;
+export const COMMUNITY_MAX_PROMPTS = 50;
 
 // Tag limits
 export const MAX_TAGS = 10;

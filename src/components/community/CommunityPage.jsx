@@ -6,7 +6,7 @@ import CommunityDetailModal from "./CommunityDetailModal";
 import { SearchIcon, LoadingSpinner, EmptyStateIcon } from "../ui/icons";
 import { SearchInput, LoadingState, EmptyState } from "../ui";
 import { formatCommunityPromptData, fetchUserInteractions } from "../../utils/community";
-import { COMMUNITY_PROMPTS_LIMIT, COMMUNITY_TAB } from "../../constants/community";
+import { COMMUNITY_MAX_PROMPTS, COMMUNITY_TAB } from "../../constants/community";
 
 /**
  * 社区广场主页面
@@ -51,7 +51,7 @@ function CommunityPage({ user, onClose, onError, onShowUserProfile }) {
           .order("copy_count", { ascending: false });
       }
 
-      query = query.limit(50);
+      query = query.limit(COMMUNITY_MAX_PROMPTS);
 
       const { data, error } = await query;
 

@@ -94,21 +94,27 @@ async function withdrawCommunityPrompt(communityPromptId) {
 
 /**
  * Format prompt data from Supabase to app format
+ * @param {Array} data - Raw prompt data from Supabase
+ * @param {Map} communityPromptMap - Map of prompt_id -> community_prompt_id
  */
-function formatPromptData(data, publishedPromptIds = new Set()) {
-  return (data || []).map((p) => ({
-    id: p.id,
-    title: p.title,
-    content: p.content,
-    categoryId: p.category_id,
-    categoryName: p.categories?.name,
-    categorySlug: p.categories?.slug,
-    model: p.model,
-    tags: p.tags || [],
-    usageCount: p.usage_count,
-    createdAt: p.created_at,
-    isPublishedToCommunity: publishedPromptIds.has(p.id),
-  }));
+function formatPromptData(data, communityPromptMap = new Map()) {
+  return (data || []).map((p) => {
+    const communityPromptId = communityPromptMap.get(p.id);
+    return {
+      id: p.id,
+      title: p.title,
+      content: p.content,
+      categoryId: p.category_id,
+      categoryName: p.categories?.name,
+      categorySlug: p.categories?.slug,
+      model: p.model,
+      tags: p.tags || [],
+      usageCount: p.usage_count,
+      createdAt: p.created_at,
+      isPublishedToCommunity: Boolean(communityPromptId),
+      communityPromptId: communityPromptId || null,
+    };
+  });
 }
 
 /**

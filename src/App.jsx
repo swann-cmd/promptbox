@@ -167,16 +167,19 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
       // 查询已发布的社区提示词
       const { data: communityData, error: communityError } = await supabase
         .from("community_prompts")
-        .select("prompt_id, status")
+        .select("id, prompt_id, status")
         .eq("user_id", user.id)
         .eq("status", "published");
 
-      let publishedPromptIds = new Set();
+      // 创建映射：prompt_id -> community_prompt_id
+      const communityPromptMap = new Map();
       if (!communityError && communityData) {
-        publishedPromptIds = new Set(communityData.map(cp => cp.prompt_id));
+        communityData.forEach(cp => {
+          communityPromptMap.set(cp.prompt_id, cp.id);
+        });
       }
 
-      setPrompts(formatPromptData(data, publishedPromptIds));
+      setPrompts(formatPromptData(data, communityPromptMap));
     } catch (error) {
       console.error("加载 prompts 失败:", error);
     } finally {
@@ -221,7 +224,11 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
     try {
       const { error } = await supabase.rpc("increment_usage_count", { prompt_id: id });
 
-      if (error) throw error;
+      // 如果 RPC 函数不存在，降级到本地更新
+      if (error) {
+        console.warn("RPC 调用失败，使用本地计数:", error.message);
+        // 不抛出错误，继续执行本地更新
+      }
 
       setPrompts(prev => prev.map(p =>
         p.id === id ? { ...p, usageCount: p.usageCount + 1 } : p
@@ -232,6 +239,7 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
       }
     } catch (error) {
       console.error("更新使用计数失败:", error);
+      // 即使失败也不影响用户复制操作，静默处理
     }
   };
 
@@ -421,20 +429,20 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
     <div className="min-h-screen bg-gray-50" style={APP_FONT}>
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-xl border-b border-gray-100 sticky top-0 z-40">
-        <div className="max-w-5xl mx-auto px-6 py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-500 rounded-xl flex items-center justify-center shadow-sm shadow-blue-200">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-2.5 sm:py-3.5 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-500 rounded-xl flex items-center justify-center shadow-sm shadow-blue-200">
               <LogoIcon />
             </div>
-            <div>
+            <div className="hidden sm:block">
               <span className="text-sm font-semibold text-gray-900">PromptBox</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <button
               onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold rounded-xl transition-colors shadow-sm shadow-blue-200"
+              className="flex items-center justify-center p-2 sm:gap-1.5 sm:px-3.5 py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold rounded-xl transition-colors shadow-sm shadow-blue-200"
               title="新增"
             >
               <PlusIcon />
@@ -442,7 +450,7 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
             </button>
             <button
               onClick={() => setShowImportModal(true)}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-2 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-xl border border-gray-200 transition-colors"
+              className="flex items-center justify-center p-2 sm:gap-1.5 sm:px-3.5 py-2 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-xl border border-gray-200 transition-colors hidden sm:flex"
               title="导入"
             >
               <UploadIcon />
@@ -450,7 +458,7 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
             </button>
             <button
               onClick={() => setShowExportModal(true)}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-2 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-xl border border-gray-200 transition-colors"
+              className="flex items-center justify-center p-2 sm:gap-1.5 sm:px-3.5 py-2 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-xl border border-gray-200 transition-colors hidden sm:flex"
               title="导出"
             >
               <DownloadIcon />
@@ -458,30 +466,30 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
             </button>
             <button
               onClick={onShowCommunity}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-xs font-semibold rounded-xl transition-colors shadow-sm shadow-purple-200"
+              className="flex items-center justify-center p-2 sm:gap-1.5 sm:px-3.5 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-xs font-semibold rounded-xl transition-colors shadow-sm shadow-purple-200"
               title="社区广场"
             >
               <CommunityIcon />
               <span className="hidden sm:inline">社区</span>
             </button>
-            <div className="flex items-center gap-2 pl-2 sm:pl-3 border-l border-gray-100">
+            <div className="flex items-center gap-1 pl-1 sm:pl-3 sm:gap-2 border-l border-gray-100">
               <button
                 onClick={onShowProfileModal}
-                className="flex items-center gap-2 hover:bg-gray-50 rounded-full pr-2 pl-1 py-0.5 -ml-1 transition-colors"
+                className="flex items-center gap-1 sm:gap-2 hover:bg-gray-50 rounded-full pr-1.5 sm:pr-2 pl-1 py-0.5 -ml-1 transition-colors"
                 title="编辑个人资料"
               >
-                <div className="w-8 h-8 sm:w-7 sm:h-7 rounded-full bg-blue-100 flex items-center justify-center aspect-square">
+                <div className="w-7 h-7 sm:w-8 sm:h-7 rounded-full bg-blue-100 flex items-center justify-center aspect-square">
                   <span className="text-xs font-semibold text-blue-600">
                     {userProfile?.display_name?.[0]?.toUpperCase() || user.name?.[0]?.toUpperCase() || "U"}
                   </span>
                 </div>
-                <span className="text-xs text-gray-600 font-medium hidden sm:block">
+                <span className="text-xs text-gray-600 font-medium hidden lg:block">
                   {userProfile?.display_name || user.name || user.email}
                 </span>
               </button>
               <button
                 onClick={handleLogout}
-                className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-xs text-gray-400 hover:text-gray-600 transition-colors hidden sm:block"
               >
                 退出
               </button>
@@ -490,14 +498,14 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-7">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-7">
         {/* Search */}
         <SearchInput
           value={searchQuery}
           onChange={setSearchQuery}
           placeholder="搜索提示词标题或内容..."
           color="blue"
-          className="mb-5"
+          className="mb-4 sm:mb-5"
         />
 
         {/* Category Tabs */}
@@ -601,6 +609,7 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
           onCopy={(id) => { handleCopy(id); }}
           onUpdate={handleUpdate}
           onPublishSuccess={fetchPrompts}
+          onWithdrawSuccess={fetchPrompts}
           categories={categories}
           models={MODELS}
           onError={onShowAlert}

@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import PropTypes from "prop-types";
 import CategoryBadge from "../ui/CategoryBadge";
 import CopyButton from "../ui/CopyButton";
@@ -7,6 +8,12 @@ import { DeleteIcon, UsageIcon, DateIcon, ChevronRightIcon } from "../ui/icons";
  * 提示词卡片组件
  */
 function PromptCard({ prompt, onCopy, onClick, onDelete }) {
+  // 缓存日期字符串，避免每次渲染都重新创建
+  const dateString = useMemo(() =>
+    new Date(prompt.createdAt).toLocaleDateString("zh-CN"),
+    [prompt.createdAt]
+  );
+
   return (
     <div
       className="group bg-white rounded-2xl border border-gray-100 p-5 hover:border-gray-200 hover:shadow-md transition-all duration-300 cursor-pointer relative"
@@ -49,7 +56,7 @@ function PromptCard({ prompt, onCopy, onClick, onDelete }) {
           </span>
           <span className="flex items-center gap-1 text-xs text-gray-400">
             <DateIcon />
-            {new Date(prompt.createdAt).toLocaleDateString("zh-CN")}
+            {dateString}
           </span>
         </div>
         <span className="text-xs text-gray-300 group-hover:text-blue-400 transition-colors flex items-center gap-1">

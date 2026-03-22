@@ -22,5 +22,5 @@ export const IMPORT_MAX_FILE_SIZE = 4.5 * 1024 * 1024; // 4.5MB
 export const MAX_TAGS = 10;
 export const MAX_TAG_LENGTH = 50;
 
-// 组件尺寸限制
+// 重试限制
 export const MAX_RETRIES = 2;
