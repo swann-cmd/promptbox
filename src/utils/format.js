@@ -1,20 +1,28 @@
 /**
  * 格式化工具函数
- * 统一的日期和数字格式化
+ * 使用 date-fns 进行日期格式化
  */
+
+import { format, formatDistanceToNow, isValid, parseISO } from 'date-fns';
+import { zhCN } from 'date-fns/locale';
 
 /**
  * 格式化日期
  * @param {string|Date} date - 日期对象或日期字符串
+ * @param {string} formatStr - 格式字符串，默认为 'yyyy-MM-dd'
  * @returns {string} 格式化后的日期字符串
  */
-export function formatDate(date) {
+export function formatDate(date, formatStr = 'yyyy-MM-dd') {
   if (!date) return '';
-  return new Date(date).toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+
+  try {
+    const dateObj = typeof date === 'string' ? parseISO(date) : date;
+    if (!isValid(dateObj)) return '';
+    return format(dateObj, formatStr, { locale: zhCN });
+  } catch (error) {
+    console.warn('日期格式化失败:', error);
+    return '';
+  }
 }
 
 /**
@@ -23,14 +31,7 @@ export function formatDate(date) {
  * @returns {string} 格式化后的日期时间字符串
  */
 export function formatDateTime(date) {
-  if (!date) return '';
-  return new Date(date).toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatDate(date, 'yyyy年MM月dd日 HH:mm');
 }
 
 /**
@@ -41,23 +42,28 @@ export function formatDateTime(date) {
 export function formatRelativeTime(date) {
   if (!date) return '';
 
-  const now = new Date();
-  const target = new Date(date);
-  const diff = now - target;
+  try {
+    const dateObj = typeof date === 'string' ? parseISO(date) : date;
+    if (!isValid(dateObj)) return '';
 
-  const seconds = Math.floor(diff / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-  const months = Math.floor(days / 30);
-  const years = Math.floor(days / 365);
+    const distance = formatDistanceToNow(dateObj, {
+      locale: zhCN,
+      addSuffix: true
+    });
 
-  if (seconds < 60) return '刚刚';
-  if (minutes < 60) return `${minutes}分钟前`;
-  if (hours < 24) return `${hours}小时前`;
-  if (days < 30) return `${days}天前`;
-  if (months < 12) return `${months}个月前`;
-  return `${years}年前`;
+    // 将英文的 "less than a minute ago" 转换为 "刚刚"
+    if (distance.includes('不到1分钟')) {
+      return '刚刚';
+    }
+
+    // 清理格式，去掉 "大约" 等词
+    return distance
+      .replace('大约', '')
+      .replace('左右', '');
+  } catch (error) {
+    console.warn('相对时间格式化失败:', error);
+    return '';
+  }
 }
 
 /**
