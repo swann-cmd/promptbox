@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { IMPORT_MAX_ROWS, IMPORT_MAX_FILE_SIZE } from "../../constants/app";
-import { CloseIcon, UploadIcon, DownloadIcon, InfoIcon } from "../ui/icons";
+import { UploadIcon, DownloadIcon, InfoIcon } from "../ui/icons";
+import { CloseButton } from "../ui";
 
 /**
  * 导入提示词模态框组件
@@ -197,12 +198,7 @@ function ImportModal({ onClose, onImport, onError }) {
       <div className="bg-white dark:bg-dark-bgSecondary rounded-3xl shadow-2xl w-full max-w-2xl p-6">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-base font-semibold text-gray-900 dark:text-dark-text">导入 Prompts</h2>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-dark-bg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-          >
-            <CloseIcon />
-          </button>
+          <CloseButton onClick={onClose} />
         </div>
 
         <div className="space-y-4">

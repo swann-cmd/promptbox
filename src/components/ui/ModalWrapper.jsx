@@ -1,4 +1,4 @@
-import { CloseIcon } from "./icons";
+import CloseButton from "./CloseButton";
 
 /**
  * Reusable modal wrapper component
@@ -29,12 +29,7 @@ function ModalWrapper({ isOpen, onClose, title, size = "md", children, headerCon
               {title && <h2 className="text-lg font-semibold text-gray-900 dark:text-dark-text">{title}</h2>}
               <div className="flex items-center gap-2">
                 {headerContent}
-                <button
-                  onClick={onClose}
-                  className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-dark-bg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                >
-                  <CloseIcon />
-                </button>
+                <CloseButton onClick={onClose} />
               </div>
             </div>
           </div>

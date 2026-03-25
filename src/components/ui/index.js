@@ -17,6 +17,7 @@ export { SearchInput } from './SearchInput';
 export { default as CategoryBadge } from './CategoryBadge';
 export { default as CopyButton } from './CopyButton';
 export { default as ToggleButton } from './ToggleButton';
+export { default as CloseButton } from './CloseButton';
 export { Button } from './Button';
 
 // State Components

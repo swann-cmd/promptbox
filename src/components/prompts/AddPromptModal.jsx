@@ -2,7 +2,8 @@ import { useState, useMemo, useEffect } from "react";
 import PropTypes from "prop-types";
 import { MODELS } from "../../constants/app";
 import { PROMPT_TEMPLATES, getTemplatesByCategory, getTemplateCategories } from "../../constants/templates";
-import { CloseIcon, DocumentIcon } from "../ui/icons";
+import { DocumentIcon } from "../ui/icons";
+import { CloseButton } from "../ui";
 import { sanitizeInput } from "../../utils/sanitize";
 import { useTagManager } from "../../hooks/useTagManager";
 
@@ -131,12 +132,7 @@ function AddPromptModal({ onClose, onAdd, categories }) {
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-base font-semibold text-gray-900 dark:text-dark-text">添加 Prompt</h2>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-dark-bg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-          >
-            <CloseIcon />
-          </button>
+          <CloseButton onClick={onClose} />
         </div>
 
         {/* Mode Toggle */}

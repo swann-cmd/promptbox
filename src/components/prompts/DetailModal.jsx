@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import CategoryBadge from "../ui/CategoryBadge";
 import CopyButton from "../ui/CopyButton";
+import { CloseButton } from "../ui";
 import PublishModal from "../community/PublishModal";
 import AlertDialog from "../ui/dialogs/AlertDialog";
-import { CloseIcon, EditIcon, UsageIcon, DateIcon, CommunityIcon, UndoIcon } from "../ui/icons";
+import { EditIcon, UsageIcon, DateIcon, CommunityIcon, UndoIcon } from "../ui/icons";
 import { useTagManager, MAX_TAGS } from "../../hooks/useTagManager";
 import { withdrawCommunityPrompt } from "../../utils/community";
 
@@ -224,7 +225,9 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
                     className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-gray-100 dark:bg-dark-bg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                     title="取消"
                   >
-                    <CloseIcon />
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                   </button>
                   <button
                     onClick={handleSave}
@@ -243,12 +246,7 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
                   >
                     <EditIcon />
                   </button>
-                  <button
-                    onClick={onClose}
-                    className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-gray-100 dark:bg-dark-bg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <CloseIcon />
-                  </button>
+                  <CloseButton onClick={onClose} />
                 </>
               )}
             </div>

@@ -7,22 +7,31 @@ import { format, formatDistanceToNow, isValid, parseISO } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
 
 /**
+ * 安全地解析日期
+ * @param {string|Date} date - 日期对象或日期字符串
+ * @returns {Date|null} 解析后的日期对象，失败返回 null
+ */
+function safeParseDate(date) {
+  if (!date) return null;
+
+  try {
+    const dateObj = typeof date === 'string' ? parseISO(date) : date;
+    return isValid(dateObj) ? dateObj : null;
+  } catch (error) {
+    console.warn('日期解析失败:', error);
+    return null;
+  }
+}
+
+/**
  * 格式化日期
  * @param {string|Date} date - 日期对象或日期字符串
  * @param {string} formatStr - 格式字符串，默认为 'yyyy-MM-dd'
  * @returns {string} 格式化后的日期字符串
  */
 export function formatDate(date, formatStr = 'yyyy-MM-dd') {
-  if (!date) return '';
-
-  try {
-    const dateObj = typeof date === 'string' ? parseISO(date) : date;
-    if (!isValid(dateObj)) return '';
-    return format(dateObj, formatStr, { locale: zhCN });
-  } catch (error) {
-    console.warn('日期格式化失败:', error);
-    return '';
-  }
+  const dateObj = safeParseDate(date);
+  return dateObj ? format(dateObj, formatStr, { locale: zhCN }) : '';
 }
 
 /**
@@ -40,12 +49,10 @@ export function formatDateTime(date) {
  * @returns {string} 相对时间字符串（如"刚刚"、"5分钟前"）
  */
 export function formatRelativeTime(date) {
-  if (!date) return '';
+  const dateObj = safeParseDate(date);
+  if (!dateObj) return '';
 
   try {
-    const dateObj = typeof date === 'string' ? parseISO(date) : date;
-    if (!isValid(dateObj)) return '';
-
     const distance = formatDistanceToNow(dateObj, {
       locale: zhCN,
       addSuffix: true

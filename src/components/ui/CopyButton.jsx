@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { CheckSmallIcon, CopyIcon } from "./icons";
 
 /**
@@ -13,6 +13,17 @@ function CopyButton({ text, onCopy, onError, size = "sm", disabled = false }) {
   const [copied, setCopied] = useState(false);
   const timeoutRef = useRef(null);
 
+  // 统一的成功处理
+  const handleSuccess = useCallback(async () => {
+    setCopied(true);
+    if (onCopy) await onCopy();
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => setCopied(false), 2000);
+  }, [onCopy]);
+
   const handleCopy = async () => {
     if (disabled) return;
 
@@ -23,15 +34,7 @@ function CopyButton({ text, onCopy, onError, size = "sm", disabled = false }) {
       }
 
       await navigator.clipboard.writeText(text);
-      setCopied(true);
-      if (onCopy) await onCopy();
-
-      // 清理之前的 timeout
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-
-      timeoutRef.current = setTimeout(() => setCopied(false), 2000);
+      await handleSuccess();
     } catch (error) {
       console.error("复制失败:", error);
 
@@ -49,14 +52,7 @@ function CopyButton({ text, onCopy, onError, size = "sm", disabled = false }) {
         document.body.removeChild(textArea);
 
         if (successful) {
-          setCopied(true);
-          if (onCopy) await onCopy();
-
-          if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-          }
-
-          timeoutRef.current = setTimeout(() => setCopied(false), 2000);
+          await handleSuccess();
           return;
         }
       } catch (fallbackError) {

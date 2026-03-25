@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 import { sanitizeInput } from "../../utils/sanitize";
 import { useTagManager, MAX_TAGS } from "../../hooks/useTagManager";
-import { CloseIcon } from "../ui/icons";
+import { CloseButton } from "../ui";
 
 /**
  * 发布到社区模态框
@@ -84,12 +84,7 @@ function PublishModal({ prompt, onClose, onSuccess, onError }) {
         <div className="px-6 pt-6 pb-4 border-b border-gray-50 dark:border-dark-border">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-dark-text">发布到社区</h2>
-            <button
-              onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-dark-bg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-            >
-              <CloseIcon />
-            </button>
+            <CloseButton onClick={onClose} />
           </div>
         </div>
 
