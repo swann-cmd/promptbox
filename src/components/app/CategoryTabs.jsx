@@ -33,14 +33,14 @@ export function CategoryTabs({
             className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all duration-200 ${
               isActive
                 ? "bg-blue-500 text-white shadow-sm shadow-blue-200"
-                : "bg-white text-gray-500 hover:text-gray-700 border border-gray-100 hover:border-gray-200"
+                : "bg-white dark:bg-dark-bg text-gray-500 dark:text-dark-textSecondary hover:text-gray-700 dark:hover:text-dark-text border border-gray-100 dark:border-dark-border hover:border-gray-200 dark:hover:border-gray-600"
             }`}
           >
             {cat.name}
             <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
               isActive
                 ? "bg-blue-400/50 text-white"
-                : "bg-gray-100 text-gray-400"
+                : "bg-gray-100 dark:bg-dark-bgSecondary text-gray-400 dark:text-dark-textSecondary"
             }`}>
               {cat.count}
             </span>

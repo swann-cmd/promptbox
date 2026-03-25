@@ -14,15 +14,15 @@ export function EmptyState({
   return (
     <div className={`text-center py-16 ${className}`}>
       {icon && (
-        <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <div className="w-16 h-16 bg-gray-100 dark:bg-dark-bg rounded-2xl flex items-center justify-center mx-auto mb-4">
           {icon}
         </div>
       )}
       {title && (
-        <h3 className="text-base font-semibold text-gray-900 mb-2">{title}</h3>
+        <h3 className="text-base font-semibold text-gray-900 dark:text-dark-text mb-2">{title}</h3>
       )}
       {message && (
-        <p className="text-sm text-gray-500 mb-4 max-w-sm mx-auto">{message}</p>
+        <p className="text-sm text-gray-500 dark:text-dark-textSecondary mb-4 max-w-sm mx-auto">{message}</p>
       )}
       {action}
     </div>

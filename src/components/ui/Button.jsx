@@ -16,11 +16,11 @@ export function Button({
   ...props
 }) {
   const variantClasses = {
-    primary: 'bg-blue-500 text-white hover:bg-blue-600 disabled:bg-gray-300',
-    secondary: 'bg-gray-100 text-gray-700 hover:bg-gray-200 disabled:bg-gray-50 disabled:text-gray-400',
-    ghost: 'bg-transparent text-gray-700 hover:bg-gray-100 disabled:text-gray-400',
-    danger: 'bg-red-500 text-white hover:bg-red-600 disabled:bg-gray-300',
-    success: 'bg-green-500 text-white hover:bg-green-600 disabled:bg-gray-300',
+    primary: 'bg-blue-500 text-white hover:bg-blue-600 dark:hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-600',
+    secondary: 'bg-gray-100 dark:bg-dark-bg text-gray-700 dark:text-dark-text hover:bg-gray-200 dark:hover:bg-gray-700 disabled:bg-gray-50 dark:disabled:bg-dark-bgSecondary disabled:text-gray-400 dark:disabled:text-dark-textSecondary',
+    ghost: 'bg-transparent text-gray-700 dark:text-dark-text hover:bg-gray-100 dark:hover:bg-gray-700 disabled:text-gray-400 dark:disabled:text-dark-textSecondary',
+    danger: 'bg-red-500 text-white hover:bg-red-600 dark:hover:bg-red-700 disabled:bg-gray-300 dark:disabled:bg-gray-600',
+    success: 'bg-green-500 text-white hover:bg-green-600 dark:hover:bg-green-700 disabled:bg-gray-300 dark:disabled:bg-gray-600',
   };
 
   const sizeClasses = {

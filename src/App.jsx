@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { supabase } from "./lib/supabase";
+import { ThemeProvider } from "./context/ThemeContext";
 
 // Components - 使用新的 hooks 和组件
 import { usePromptData } from "./hooks/usePromptData";
@@ -199,7 +200,7 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
 
   return (
     <>
-    <div className="min-h-screen bg-gray-50" style={APP_FONT}>
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-bg" style={APP_FONT}>
       {/* Header */}
       <AppHeader
         user={user}
@@ -234,11 +235,11 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
 
         {/* Stats */}
         <div className="flex items-center justify-between mb-4">
-          <p className="text-xs text-gray-400">
-            共 <span className="font-semibold text-gray-600">{filtered.length}</span> 条提示词
+          <p className="text-xs text-gray-400 dark:text-dark-textSecondary">
+            共 <span className="font-semibold text-gray-600 dark:text-dark-text">{filtered.length}</span> 条提示词
           </p>
-          <p className="text-xs text-gray-400">
-            累计使用 <span className="font-semibold text-gray-600">{totalUsage}</span> 次
+          <p className="text-xs text-gray-400 dark:text-dark-textSecondary">
+            累计使用 <span className="font-semibold text-gray-600 dark:text-dark-text">{totalUsage}</span> 次
           </p>
         </div>
 
@@ -394,14 +395,14 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50" style={APP_FONT}>
-        <div className="text-gray-500">加载中...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-bg" style={APP_FONT}>
+        <div className="text-gray-500 dark:text-dark-textSecondary">加载中...</div>
       </div>
     );
   }
 
   return (
-    <>
+    <ThemeProvider>
       {/* Community Page */}
       {showCommunity && (
         <CommunityPage
@@ -462,6 +463,6 @@ export default function App() {
           onError={onShowAlert}
         />
       )}
-    </>
+    </ThemeProvider>
   );
 }

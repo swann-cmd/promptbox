@@ -65,7 +65,7 @@ function Dialog({ isOpen, title, message, type = "info", onConfirm, onCancel, co
 
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6">
+      <div className="bg-white dark:bg-dark-bgSecondary rounded-3xl shadow-2xl w-full max-w-sm p-6">
         {/* Icon */}
         <div className={`w-12 h-12 ${config.bgClass} rounded-full flex items-center justify-center mx-auto mb-4`}>
           <span className={config.iconColor}>
@@ -74,8 +74,8 @@ function Dialog({ isOpen, title, message, type = "info", onConfirm, onCancel, co
         </div>
 
         {/* Title and Message */}
-        <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center">{title}</h3>
-        <p className="text-sm text-gray-600 mb-6 text-center">{message}</p>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text mb-2 text-center">{title}</h3>
+        <p className="text-sm text-gray-600 dark:text-dark-textSecondary mb-6 text-center">{message}</p>
 
         {/* Buttons */}
         <div className={config.showCancel ? "flex gap-3" : ""}>

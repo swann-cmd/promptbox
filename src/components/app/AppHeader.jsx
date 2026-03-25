@@ -6,6 +6,7 @@
 
 import PropTypes from 'prop-types';
 import { LogoIcon, PlusIcon, UploadIcon, DownloadIcon, CommunityIcon } from '../ui/icons';
+import ThemeToggleButton from './ThemeToggleButton';
 
 export function AppHeader({
   user,
@@ -25,7 +26,7 @@ export function AppHeader({
   const displayName = userProfile?.display_name || user?.name || user?.email;
 
   return (
-    <div className="bg-white/80 backdrop-blur-xl border-b border-gray-100 sticky top-0 z-40">
+    <div className="bg-white/80 dark:bg-dark-bgSecondary/80 backdrop-blur-xl border-b border-gray-100 dark:border-dark-border sticky top-0 z-40">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-2.5 sm:py-3.5 flex items-center justify-between gap-2">
         {/* Logo */}
         <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
@@ -33,7 +34,7 @@ export function AppHeader({
             <LogoIcon />
           </div>
           <div className="hidden sm:block">
-            <span className="text-sm font-semibold text-gray-900">PromptBox</span>
+            <span className="text-sm font-semibold text-gray-900 dark:text-dark-text">PromptBox</span>
           </div>
         </div>
 
@@ -52,7 +53,7 @@ export function AppHeader({
           {/* Import Button */}
           <button
             onClick={onImport}
-            className="flex items-center justify-center p-2 sm:gap-1.5 sm:px-3.5 py-2 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-xl border border-gray-200 transition-colors hidden sm:flex"
+            className="flex items-center justify-center p-2 sm:gap-1.5 sm:px-3.5 py-2 bg-white dark:bg-dark-bg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-dark-text text-xs font-semibold rounded-xl border border-gray-200 dark:border-dark-border transition-colors hidden sm:flex"
             title="导入"
           >
             <UploadIcon />
@@ -62,7 +63,7 @@ export function AppHeader({
           {/* Export Button */}
           <button
             onClick={onExport}
-            className="flex items-center justify-center p-2 sm:gap-1.5 sm:px-3.5 py-2 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-xl border border-gray-200 transition-colors hidden sm:flex"
+            className="flex items-center justify-center p-2 sm:gap-1.5 sm:px-3.5 py-2 bg-white dark:bg-dark-bg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-dark-text text-xs font-semibold rounded-xl border border-gray-200 dark:border-dark-border transition-colors hidden sm:flex"
             title="导出"
           >
             <DownloadIcon />
@@ -80,11 +81,14 @@ export function AppHeader({
           </button>
 
           {/* User Section */}
-          <div className="flex items-center gap-1 pl-1 sm:pl-3 sm:gap-2 border-l border-gray-100">
+          <div className="flex items-center gap-1 pl-1 sm:pl-3 sm:gap-2 border-l border-gray-100 dark:border-dark-border">
+            {/* Theme Toggle Button */}
+            <ThemeToggleButton className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-dark-bgSecondary hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" />
+
             {/* Profile Button */}
             <button
               onClick={onShowProfile}
-              className="flex items-center gap-1 sm:gap-2 hover:bg-gray-50 rounded-full pr-1.5 sm:pr-2 pl-1 py-0.5 -ml-1 transition-colors"
+              className="flex items-center gap-1 sm:gap-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-full pr-1.5 sm:pr-2 pl-1 py-0.5 -ml-1 transition-colors"
               title="编辑个人资料"
             >
               <div className="w-7 h-7 sm:w-8 sm:h-7 rounded-full bg-blue-100 flex items-center justify-center aspect-square">
@@ -92,7 +96,7 @@ export function AppHeader({
                   {userInitial}
                 </span>
               </div>
-              <span className="text-xs text-gray-600 font-medium hidden lg:block">
+              <span className="text-xs text-gray-600 dark:text-dark-text font-medium hidden lg:block">
                 {displayName}
               </span>
             </button>
@@ -100,7 +104,7 @@ export function AppHeader({
             {/* Logout Button */}
             <button
               onClick={onLogout}
-              className="text-xs text-gray-400 hover:text-gray-600 transition-colors hidden sm:block"
+              className="text-xs text-gray-400 dark:text-dark-textSecondary hover:text-gray-600 dark:hover:text-dark-text transition-colors hidden sm:block"
             >
               退出
             </button>

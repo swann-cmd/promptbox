@@ -13,9 +13,9 @@ export function SearchInput({
   className = '',
 }) {
   const colorClasses = {
-    blue: 'bg-white border-gray-200 focus:border-blue-400 focus:ring-blue-500/20',
-    purple: 'bg-white border-gray-200 focus:border-purple-400 focus:ring-purple-500/20',
-    gray: 'bg-gray-50 border-gray-200 focus:border-gray-400 focus:ring-gray-500/20',
+    blue: 'bg-white dark:bg-dark-bgSecondary border-gray-200 dark:border-dark-border focus:border-blue-400 dark:focus:border-blue-500 focus:ring-blue-500/20',
+    purple: 'bg-white dark:bg-dark-bgSecondary border-gray-200 dark:border-dark-border focus:border-purple-400 dark:focus:border-purple-500 focus:ring-purple-500/20',
+    gray: 'bg-gray-50 dark:bg-dark-bgSecondary border-gray-200 dark:border-dark-border focus:border-gray-400 dark:focus:border-gray-500 focus:ring-gray-500/20',
   };
 
   const iconColor = {
@@ -36,7 +36,7 @@ export function SearchInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className={`w-full pl-11 pr-10 py-3 rounded-2xl border text-sm focus:outline-none focus:ring-2 transition-all ${colorClasses[color]}`}
+        className={`w-full pl-11 pr-10 py-3 rounded-2xl border text-sm text-gray-900 dark:text-dark-text focus:outline-none focus:ring-2 transition-all ${colorClasses[color]}`}
       />
       {value && (
         <button
@@ -44,9 +44,9 @@ export function SearchInput({
             onClear?.();
             onChange('');
           }}
-          className={`absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors`}
+          className={`absolute right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-bg flex items-center justify-center transition-colors`}
         >
-          <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-4 h-4 text-gray-400 dark:text-dark-textSecondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>

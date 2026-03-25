@@ -181,9 +181,9 @@ function CommunityPage({ user, onClose, onError, onShowUserProfile }) {
   ], [categories]);
 
   return (
-    <div className="fixed inset-0 bg-gray-50 z-50 overflow-y-auto">
+    <div className="fixed inset-0 bg-gray-50 dark:bg-dark-bg z-50 overflow-y-auto">
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-xl border-b border-gray-100 sticky top-0 z-40">
+      <div className="bg-white/80 dark:bg-dark-bgSecondary/80 backdrop-blur-xl border-b border-gray-100 dark:border-dark-border sticky top-0 z-40">
         <div className="max-w-5xl mx-auto px-6 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-sm shadow-purple-200">
@@ -192,7 +192,7 @@ function CommunityPage({ user, onClose, onError, onShowUserProfile }) {
               </svg>
             </div>
             <div>
-              <span className="text-sm font-semibold text-gray-900">社区广场</span>
+              <span className="text-sm font-semibold text-gray-900 dark:text-dark-text">社区广场</span>
             </div>
           </div>
 
