@@ -80,20 +80,20 @@ export function FormTextarea({
   ...props
 }) {
   const inputClasses = error
-    ? 'border-red-300 focus:ring-red-500/20 focus:border-red-400'
-    : 'border-gray-200 focus:ring-blue-500/20 focus:border-blue-400';
+    ? 'border-red-300 dark:border-red-700 focus:ring-red-500/20 focus:border-red-400'
+    : 'border-gray-200 dark:border-dark-border focus:ring-blue-500/20 dark:focus:ring-blue-500/30 focus:border-blue-400 dark:focus:border-blue-500';
 
   return (
     <div className={className}>
       <div className="flex items-center justify-between mb-1.5">
         {label && (
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 dark:text-dark-text">
             {label}
             {required && <span className="text-red-500 ml-1">*</span>}
           </label>
         )}
         {maxLength && (
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-gray-400 dark:text-dark-textSecondary">
             {value?.length || 0} / {maxLength}
           </span>
         )}
@@ -106,14 +106,14 @@ export function FormTextarea({
         disabled={disabled}
         rows={rows}
         maxLength={maxLength}
-        className={`w-full px-3.5 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 transition-all resize-none disabled:bg-gray-100 disabled:cursor-not-allowed ${inputClasses}`}
+        className={`w-full px-3.5 py-2.5 rounded-xl border text-sm text-gray-900 dark:text-dark-text bg-white dark:bg-dark-bg focus:outline-none focus:ring-2 transition-all resize-none disabled:bg-gray-100 dark:disabled:bg-dark-bgSecondary disabled:cursor-not-allowed ${inputClasses}`}
         {...props}
       />
       {error && (
-        <p className="mt-1 text-xs text-red-500">{error}</p>
+        <p className="mt-1 text-xs text-red-500 dark:text-red-400">{error}</p>
       )}
       {helperText && !error && (
-        <p className="mt-1 text-xs text-gray-400">{helperText}</p>
+        <p className="mt-1 text-xs text-gray-400 dark:text-dark-textSecondary">{helperText}</p>
       )}
     </div>
   );
