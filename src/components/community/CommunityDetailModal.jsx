@@ -163,7 +163,7 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
 
         {/* Content */}
         <div className="px-4 sm:px-6 py-5 overflow-y-auto" style={{ maxHeight: "calc(85vh - 320px)" }}>
-          <div className="bg-gray-50 rounded-2xl p-4">
+          <div className="bg-gray-50 dark:bg-dark-bg rounded-2xl p-4">
             <p className="text-sm text-gray-700 dark:text-dark-text leading-relaxed whitespace-pre-wrap">
               {prompt.content}
             </p>
@@ -175,7 +175,7 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
               {prompt.tags.map((tag, index) => (
                 <span
                   key={index}
-                  className="text-xs text-purple-600 bg-purple-50 px-2.5 py-1 rounded-lg font-medium"
+                  className="text-xs text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 px-2.5 py-1 rounded-lg font-medium"
                 >
                   #{tag}
                 </span>

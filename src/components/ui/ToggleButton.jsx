@@ -86,12 +86,12 @@ function ToggleButton({
 
   const colorClasses = {
     red: {
-      active: "bg-red-50 text-red-500 hover:bg-red-100",
-      inactive: "bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-500"
+      active: "bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50",
+      inactive: "bg-gray-50 dark:bg-dark-bg text-gray-400 dark:text-dark-textSecondary hover:bg-gray-100 dark:hover:bg-dark-bg hover:text-gray-500 dark:hover:text-dark-text"
     },
     amber: {
-      active: "bg-amber-50 text-amber-500 hover:bg-amber-100",
-      inactive: "bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-500"
+      active: "bg-amber-50 dark:bg-amber-900/30 text-amber-500 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/50",
+      inactive: "bg-gray-50 dark:bg-dark-bg text-gray-400 dark:text-dark-textSecondary hover:bg-gray-100 dark:hover:bg-dark-bg hover:text-gray-500 dark:hover:text-dark-text"
     }
   };
 

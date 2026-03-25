@@ -127,24 +127,24 @@ function AddPromptModal({ onClose, onAdd, categories }) {
 
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-dark-bgSecondary rounded-3xl shadow-2xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-base font-semibold text-gray-900">添加 Prompt</h2>
+          <h2 className="text-base font-semibold text-gray-900 dark:text-dark-text">添加 Prompt</h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-dark-bg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
           >
             <CloseIcon />
           </button>
         </div>
 
         {/* Mode Toggle */}
-        <div className="flex bg-gray-100 rounded-xl p-1 mb-5">
+        <div className="flex bg-gray-100 dark:bg-dark-bg rounded-xl p-1 mb-5">
           <button
             onClick={() => setMode("manual")}
             className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-              mode === "manual" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+              mode === "manual" ? "bg-white dark:bg-dark-bgSecondary text-gray-900 dark:text-dark-text shadow-sm" : "text-gray-500 dark:text-dark-textSecondary hover:text-gray-700 dark:hover:text-dark-text"
             }`}
           >
             手动创建
@@ -152,7 +152,7 @@ function AddPromptModal({ onClose, onAdd, categories }) {
           <button
             onClick={() => setMode("template")}
             className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-              mode === "template" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+              mode === "template" ? "bg-white dark:bg-dark-bgSecondary text-gray-900 dark:text-dark-text shadow-sm" : "text-gray-500 dark:text-dark-textSecondary hover:text-gray-700 dark:hover:text-dark-text"
             }`}
           >
             从模板创建
@@ -164,16 +164,16 @@ function AddPromptModal({ onClose, onAdd, categories }) {
           <div className="space-y-4">
             {/* 撤销模板选择按钮 */}
             {selectedTemplate && (
-              <div className="flex items-center justify-between bg-blue-50 rounded-xl px-4 py-3">
+              <div className="flex items-center justify-between bg-blue-50 dark:bg-blue-900/20 rounded-xl px-4 py-3">
                 <div className="flex items-center gap-2">
                   <DocumentIcon />
-                  <span className="text-sm text-blue-700">
+                  <span className="text-sm text-blue-700 dark:text-blue-300">
                     已应用模板：<span className="font-semibold">{selectedTemplate.title}</span>
                   </span>
                 </div>
                 <button
                   onClick={resetTemplateSelection}
-                  className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                  className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
                 >
                   重新选择
                 </button>
@@ -181,9 +181,9 @@ function AddPromptModal({ onClose, onAdd, categories }) {
             )}
 
             <div>
-              <label className="text-xs font-medium text-gray-500 block mb-1.5">标题</label>
+              <label className="text-xs font-medium text-gray-500 dark:text-dark-textSecondary block mb-1.5">标题</label>
               <input
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-dark-border text-sm text-gray-900 dark:text-dark-text bg-white dark:bg-dark-bg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
                 placeholder="给这个 Prompt 起个名字"
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
@@ -191,9 +191,9 @@ function AddPromptModal({ onClose, onAdd, categories }) {
             </div>
 
             <div>
-              <label className="text-xs font-medium text-gray-500 block mb-1.5">内容</label>
+              <label className="text-xs font-medium text-gray-500 dark:text-dark-textSecondary block mb-1.5">内容</label>
               <textarea
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all resize-none"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-dark-border text-sm text-gray-900 dark:text-dark-text bg-white dark:bg-dark-bg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all resize-none"
                 placeholder="输入提示词内容..."
                 rows={5}
                 value={form.content}
@@ -203,9 +203,9 @@ function AddPromptModal({ onClose, onAdd, categories }) {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-medium text-gray-500 block mb-1.5">场景分类</label>
+                <label className="text-xs font-medium text-gray-500 dark:text-dark-textSecondary block mb-1.5">场景分类</label>
                 <select
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all bg-white"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-dark-border text-sm text-gray-900 dark:text-dark-text focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all bg-white dark:bg-dark-bg"
                   value={form.categoryId}
                   onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
                 >
@@ -219,9 +219,9 @@ function AddPromptModal({ onClose, onAdd, categories }) {
               </div>
 
               <div>
-                <label className="text-xs font-medium text-gray-500 block mb-1.5">适用模型</label>
+                <label className="text-xs font-medium text-gray-500 dark:text-dark-textSecondary block mb-1.5">适用模型</label>
                 <select
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all bg-white"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-dark-border text-sm text-gray-900 dark:text-dark-text focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all bg-white dark:bg-dark-bg"
                   value={form.model}
                   onChange={(e) => setForm({ ...form, model: e.target.value })}
                 >
@@ -236,7 +236,7 @@ function AddPromptModal({ onClose, onAdd, categories }) {
 
             {/* 标签输入 */}
             <div>
-              <label className="text-xs font-medium text-gray-500 block mb-1.5">标签 <span className="text-gray-400 font-normal">(可选，最多 {canAddMore ? remaining : 0} 个)</span></label>
+              <label className="text-xs font-medium text-gray-500 dark:text-dark-textSecondary block mb-1.5">标签 <span className="text-gray-400 dark:text-dark-textSecondary font-normal">(可选，最多 {canAddMore ? remaining : 0} 个)</span></label>
 
               {/* 标签列表 */}
               {form.tags.length > 0 && (
@@ -298,9 +298,9 @@ function AddPromptModal({ onClose, onAdd, categories }) {
           <div className="space-y-4">
             {/* Category Filter - 使用预定义的模板分类 */}
             <div>
-              <label className="text-xs font-medium text-gray-500 block mb-1.5">筛选分类</label>
+              <label className="text-xs font-medium text-gray-500 dark:text-dark-textSecondary block mb-1.5">筛选分类</label>
               <select
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all bg-white"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-dark-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all bg-white dark:bg-dark-bg text-gray-900 dark:text-dark-text"
                 value={templateCategory}
                 onChange={(e) => setTemplateCategory(e.target.value)}
               >
@@ -313,42 +313,42 @@ function AddPromptModal({ onClose, onAdd, categories }) {
 
             {/* Search Box */}
             <div>
-              <label className="text-xs font-medium text-gray-500 block mb-1.5">搜索模板</label>
+              <label className="text-xs font-medium text-gray-500 dark:text-dark-textSecondary block mb-1.5">搜索模板</label>
               <input
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-dark-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all bg-white dark:bg-dark-bg text-gray-900 dark:text-dark-text"
                 placeholder="搜索模板标题、内容或标签..."
                 value={templateSearchQuery}
                 onChange={(e) => setTemplateSearchQuery(e.target.value)}
               />
               {templateSearchQuery && (
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-dark-textSecondary mt-1">
                   找到 {templatesWithPreview.length} 个结果
                 </p>
               )}
             </div>
 
             {/* Template List */}
-            <div className="border border-gray-200 rounded-xl overflow-hidden max-h-96 overflow-y-auto">
-              <div className="divide-y divide-gray-100">
+            <div className="border border-gray-200 dark:border-dark-border rounded-xl overflow-hidden max-h-96 overflow-y-auto">
+              <div className="divide-y divide-gray-100 dark:divide-dark-border">
                 {templatesWithPreview.map((template) => (
                   <button
                     key={template.id}
                     onClick={() => applyTemplate(template)}
-                    className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors"
+                    className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-dark-bg transition-colors"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                      <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
                         <DocumentIcon />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-semibold text-gray-900 mb-0.5">{template.title}</h3>
-                        <p className="text-xs text-gray-500 line-clamp-2">{template.preview}...</p>
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-dark-text mb-0.5">{template.title}</h3>
+                        <p className="text-xs text-gray-500 dark:text-dark-textSecondary line-clamp-2">{template.preview}...</p>
                         <div className="flex flex-wrap gap-1.5 mt-2">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-600">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-100 dark:bg-dark-bg text-gray-600 dark:text-dark-textSecondary">
                             {template.categoryName}
                           </span>
                           {template.tags.slice(0, 2).map((tag) => (
-                            <span key={tag} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-blue-50 text-blue-600">
+                            <span key={tag} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
                               {tag}
                             </span>
                           ))}
@@ -363,7 +363,7 @@ function AddPromptModal({ onClose, onAdd, categories }) {
             {filteredTemplates.length === 0 && (
               <div className="text-center py-8">
                 <DocumentIcon />
-                <p className="text-sm text-gray-400 mt-2">该分类暂无模板</p>
+                <p className="text-sm text-gray-400 dark:text-dark-textSecondary mt-2">该分类暂无模板</p>
               </div>
             )}
           </div>

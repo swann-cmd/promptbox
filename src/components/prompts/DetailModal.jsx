@@ -221,7 +221,7 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
                   <button
                     onClick={handleCancel}
                     disabled={saving}
-                    className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors disabled:opacity-50"
+                    className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-gray-100 dark:bg-dark-bg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                     title="取消"
                   >
                     <CloseIcon />
@@ -229,7 +229,7 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
                   <button
                     onClick={handleSave}
                     disabled={saving || !form.title.trim() || !form.content.trim()}
-                    className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-3 py-1.5 bg-blue-500 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-700 text-white text-xs font-medium rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {saving ? "保存中..." : "保存"}
                   </button>
@@ -238,14 +238,14 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
                 <>
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-blue-50 hover:bg-blue-100 transition-colors"
+                    className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
                     title="编辑"
                   >
                     <EditIcon />
                   </button>
                   <button
                     onClick={onClose}
-                    className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                    className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-gray-100 dark:bg-dark-bg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                   >
                     <CloseIcon />
                   </button>
@@ -323,7 +323,7 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="bg-gray-50 rounded-2xl p-4">
+              <div className="bg-gray-50 dark:bg-dark-bg rounded-2xl p-4">
                 <p className="text-sm text-gray-700 dark:text-dark-text leading-relaxed whitespace-pre-wrap">
                   {prompt.content}
                 </p>
@@ -335,7 +335,7 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
                   {prompt.tags.map((tag, index) => (
                     <span
                       key={index}
-                      className="inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 text-sm rounded-lg"
+                      className="inline-flex items-center px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-sm rounded-lg"
                     >
                       #{tag}
                     </span>
@@ -372,7 +372,7 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
                       <UndoIcon />
                       <span className="hidden sm:inline">{withdrawing ? "撤回中..." : "撤回"}</span>
                     </button>
-                    <div className="flex items-center gap-2 px-2 py-1.5 sm:px-4 sm:py-2.5 bg-green-50 text-green-600 text-sm font-medium rounded-xl border border-green-200">
+                    <div className="flex items-center gap-2 px-2 py-1.5 sm:px-4 sm:py-2.5 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-sm font-medium rounded-xl border border-green-200 dark:border-green-800">
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>

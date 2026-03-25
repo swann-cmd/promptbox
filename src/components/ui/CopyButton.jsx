@@ -84,8 +84,8 @@ function CopyButton({ text, onCopy, onError, size = "sm", disabled = false }) {
     : "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200";
 
   const stateClasses = copied
-    ? "bg-green-50 text-green-600"
-    : "bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700";
+    ? "bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400"
+    : "bg-gray-100 dark:bg-dark-bg text-gray-500 dark:text-dark-textSecondary hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-dark-text";
 
   return (
     <button

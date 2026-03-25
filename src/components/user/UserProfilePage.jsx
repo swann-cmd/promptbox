@@ -125,7 +125,7 @@ function UserProfilePage({ userId, currentUser, onClose, onError }) {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-gray-50 z-50 overflow-y-auto" style={APP_FONT}>
+      <div className="fixed inset-0 bg-gray-50 dark:bg-dark-bg z-50 overflow-y-auto" style={APP_FONT}>
         <div className="max-w-5xl mx-auto px-6 py-7">
           <LoadingState
             message="加载中..."
@@ -138,7 +138,7 @@ function UserProfilePage({ userId, currentUser, onClose, onError }) {
 
   if (error) {
     return (
-      <div className="fixed inset-0 bg-gray-50 z-50 overflow-y-auto" style={APP_FONT}>
+      <div className="fixed inset-0 bg-gray-50 dark:bg-dark-bg z-50 overflow-y-auto" style={APP_FONT}>
         <div className="max-w-5xl mx-auto px-6 py-7">
           <EmptyState
             icon={
@@ -151,7 +151,7 @@ function UserProfilePage({ userId, currentUser, onClose, onError }) {
             action={
               <button
                 onClick={() => window.location.reload()}
-                className="px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
+                className="px-4 py-2 bg-blue-500 dark:bg-blue-600 hover:bg-blue-600 dark:hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
               >
                 重新加载
               </button>
@@ -165,27 +165,27 @@ function UserProfilePage({ userId, currentUser, onClose, onError }) {
   const isOwnProfile = currentUser?.id === userId;
 
   return (
-    <div className="fixed inset-0 bg-gray-50 z-50 overflow-y-auto" style={APP_FONT}>
+    <div className="fixed inset-0 bg-gray-50 dark:bg-dark-bg z-50 overflow-y-auto" style={APP_FONT}>
       {/* Header */}
-      <div className="bg-white/80 backdrop-blur-xl border-b border-gray-100 sticky top-0 z-40">
+      <div className="bg-white/80 dark:bg-dark-bgSecondary/80 backdrop-blur-xl border-b border-gray-100 dark:border-dark-border sticky top-0 z-40">
         <div className="max-w-5xl mx-auto px-6 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-dark-bg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <span className="text-sm font-semibold text-gray-900">
+            <span className="text-sm font-semibold text-gray-900 dark:text-dark-text">
               {isOwnProfile ? "我的主页" : (profile?.display_name || "用户主页")}
             </span>
           </div>
 
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-dark-bg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
           >
             <CloseIcon />
           </button>
@@ -194,7 +194,7 @@ function UserProfilePage({ userId, currentUser, onClose, onError }) {
 
       <div className="max-w-5xl mx-auto px-6 py-7">
         {/* Profile Section */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-100 mb-5">
+        <div className="bg-white dark:bg-dark-bgSecondary rounded-2xl p-6 border border-gray-100 dark:border-dark-border mb-5">
           <div className="flex items-start gap-4">
             <UserAvatar
               src={profile?.avatar_url}
@@ -202,11 +202,11 @@ function UserProfilePage({ userId, currentUser, onClose, onError }) {
               size="lg"
             />
             <div className="flex-1 min-w-0">
-              <h2 className="text-lg font-semibold text-gray-900 mb-1">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-dark-text mb-1">
                 {profile?.display_name || "匿名用户"}
               </h2>
               {profile?.bio && (
-                <p className="text-sm text-gray-500 leading-relaxed">
+                <p className="text-sm text-gray-500 dark:text-dark-textSecondary leading-relaxed">
                   {profile.bio}
                 </p>
               )}
@@ -215,42 +215,42 @@ function UserProfilePage({ userId, currentUser, onClose, onError }) {
 
           {/* Stats */}
           {stats && (
-            <div className="grid grid-cols-4 gap-4 mt-5 pt-5 border-t border-gray-50">
+            <div className="grid grid-cols-4 gap-4 mt-5 pt-5 border-t border-gray-50 dark:border-dark-border">
               <div className="text-center">
                 <div className="flex items-center justify-center gap-1 mb-1">
-                  <DocumentIcon />
-                  <span className="text-lg font-semibold text-gray-900">
+                  <DocumentIcon className="text-gray-600 dark:text-dark-text" />
+                  <span className="text-lg font-semibold text-gray-900 dark:text-dark-text">
                     {stats.prompt_count || 0}
                   </span>
                 </div>
-                <p className="text-xs text-gray-400">发布</p>
+                <p className="text-xs text-gray-400 dark:text-dark-textSecondary">发布</p>
               </div>
               <div className="text-center">
                 <div className="flex items-center justify-center gap-1 mb-1">
-                  <HeartIcon />
-                  <span className="text-lg font-semibold text-gray-900">
+                  <HeartIcon className="text-gray-600 dark:text-dark-text" />
+                  <span className="text-lg font-semibold text-gray-900 dark:text-dark-text">
                     {stats.total_likes || 0}
                   </span>
                 </div>
-                <p className="text-xs text-gray-400">获赞</p>
+                <p className="text-xs text-gray-400 dark:text-dark-textSecondary">获赞</p>
               </div>
               <div className="text-center">
                 <div className="flex items-center justify-center gap-1 mb-1">
-                  <CopySmallIcon />
-                  <span className="text-lg font-semibold text-gray-900">
+                  <CopySmallIcon className="text-gray-600 dark:text-dark-text" />
+                  <span className="text-lg font-semibold text-gray-900 dark:text-dark-text">
                     {stats.total_copies || 0}
                   </span>
                 </div>
-                <p className="text-xs text-gray-400">复制</p>
+                <p className="text-xs text-gray-400 dark:text-dark-textSecondary">复制</p>
               </div>
               <div className="text-center">
                 <div className="flex items-center justify-center gap-1 mb-1">
-                  <ViewIcon />
-                  <span className="text-lg font-semibold text-gray-900">
+                  <ViewIcon className="text-gray-600 dark:text-dark-text" />
+                  <span className="text-lg font-semibold text-gray-900 dark:text-dark-text">
                     {stats.total_views || 0}
                   </span>
                 </div>
-                <p className="text-xs text-gray-400">浏览</p>
+                <p className="text-xs text-gray-400 dark:text-dark-textSecondary">浏览</p>
               </div>
             </div>
           )}
@@ -258,7 +258,7 @@ function UserProfilePage({ userId, currentUser, onClose, onError }) {
 
         {/* Prompts Section */}
         <div className="mb-4">
-          <h3 className="text-sm font-semibold text-gray-900 mb-4">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-dark-text mb-4">
             发布的提示词 ({prompts.length})
           </h3>
         </div>
@@ -285,7 +285,7 @@ function UserProfilePage({ userId, currentUser, onClose, onError }) {
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-2xl border border-gray-100">
+          <div className="bg-white dark:bg-dark-bgSecondary rounded-2xl border border-gray-100 dark:border-dark-border">
             <EmptyState
               icon={<EmptyStateIcon />}
               message={isOwnProfile ? "你还没有发布任何提示词" : "该用户还没有发布任何提示词"}
