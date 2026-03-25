@@ -17,7 +17,7 @@ function ThemeToggleButton({ className }) {
   return (
     <button
       onClick={toggleTheme}
-      className={className}
+      className={`${className} ${theme === 'dark' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : ''}`}
       title={theme === 'dark' ? '切换到亮色模式' : '切换到暗色模式'}
     >
       {theme === 'dark' ? <SunIcon /> : <MoonIcon />}

@@ -157,22 +157,22 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden max-h-[90vh] sm:max-h-[85vh] flex flex-col"
+        className="bg-white dark:bg-dark-bgSecondary rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden max-h-[90vh] sm:max-h-[85vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b border-gray-50 flex-shrink-0">
+        <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b border-gray-50 dark:border-dark-border flex-shrink-0">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               {isEditing ? (
                 <input
-                  className="w-full text-lg font-semibold text-gray-900 leading-snug mb-2.5 border-b-2 border-blue-500 focus:outline-none pb-1"
+                  className="w-full text-lg font-semibold text-gray-900 dark:text-dark-text leading-snug mb-2.5 border-b-2 border-blue-500 focus:outline-none pb-1 bg-transparent"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   placeholder="提示词标题"
                 />
               ) : (
-                <h2 className="text-lg font-semibold text-gray-900 leading-snug mb-2.5">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-dark-text leading-snug mb-2.5">
                   {prompt.title}
                 </h2>
               )}
@@ -180,7 +180,7 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
                 {isEditing ? (
                   <>
                     <select
-                      className="text-xs border border-gray-200 rounded-lg px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 bg-white"
+                      className="text-xs border border-gray-200 dark:border-dark-border rounded-lg px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 bg-white dark:bg-dark-bg text-gray-900 dark:text-dark-text"
                       value={form.categoryId}
                       onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
                     >
@@ -191,7 +191,7 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
                       ))}
                     </select>
                     <select
-                      className="text-xs border border-gray-200 rounded-lg px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 bg-white"
+                      className="text-xs border border-gray-200 dark:border-dark-border rounded-lg px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 bg-white dark:bg-dark-bg text-gray-900 dark:text-dark-text"
                       value={form.model}
                       onChange={(e) => setForm({ ...form, model: e.target.value })}
                     >
@@ -208,7 +208,7 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
                       categorySlug={prompt.categorySlug}
                       categoryName={prompt.categoryName}
                     />
-                    <span className="text-xs text-gray-400 bg-gray-50 px-2.5 py-1 rounded-full font-medium">
+                    <span className="text-xs text-gray-400 dark:text-dark-textSecondary bg-gray-50 dark:bg-dark-bg px-2.5 py-1 rounded-full font-medium">
                       {prompt.model}
                     </span>
                   </>
@@ -260,7 +260,7 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
           {isEditing ? (
             <div className="space-y-4">
               <textarea
-                className="w-full bg-gray-50 rounded-2xl p-4 text-sm text-gray-700 leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 border-2 border-transparent focus:border-blue-400 transition-all"
+                className="w-full bg-gray-50 dark:bg-dark-bg rounded-2xl p-4 text-sm text-gray-700 dark:text-dark-text leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 border-2 border-transparent focus:border-blue-400 transition-all"
                 rows={8}
                 value={form.content}
                 onChange={(e) => setForm({ ...form, content: e.target.value })}
@@ -269,7 +269,7 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
 
               {/* 标签编辑 */}
               <div>
-                <label className="text-xs font-medium text-gray-500 block mb-2">标签 <span className="text-gray-400 font-normal">(可选，最多 10 个)</span></label>
+                <label className="text-xs font-medium text-gray-500 dark:text-dark-textSecondary block mb-2">标签 <span className="text-gray-400 dark:text-dark-textSecondary font-normal">(可选，最多 10 个)</span></label>
 
                 {/* 标签列表 */}
                 {tags.length > 0 && (
@@ -306,7 +306,7 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
                     disabled={!canAddMore}
                   />
                   <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-gray-400 dark:text-dark-textSecondary">
                       {tags.length}/{MAX_TAGS}
                     </span>
                     <button
@@ -324,7 +324,7 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
           ) : (
             <div className="space-y-4">
               <div className="bg-gray-50 rounded-2xl p-4">
-                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                <p className="text-sm text-gray-700 dark:text-dark-text leading-relaxed whitespace-pre-wrap">
                   {prompt.content}
                 </p>
               </div>
@@ -351,11 +351,11 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
           <div className="px-4 sm:px-6 pb-4 sm:pb-6 pt-3 border-t border-gray-50 flex-shrink-0">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 sm:gap-4">
-                <div className="flex items-center gap-1 text-xs text-gray-400">
+                <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-dark-textSecondary">
                   <UsageIcon />
-                  <span className="hidden sm:inline">使用</span> <span className="font-semibold text-gray-600">{prompt.usageCount}</span><span className="hidden sm:inline"> 次</span>
+                  <span className="hidden sm:inline">使用</span> <span className="font-semibold text-gray-600 dark:text-dark-text">{prompt.usageCount}</span><span className="hidden sm:inline"> 次</span>
                 </div>
-                <div className="hidden sm:flex items-center gap-1.5 text-xs text-gray-400">
+                <div className="hidden sm:flex items-center gap-1.5 text-xs text-gray-400 dark:text-dark-textSecondary">
                   <DateIcon />
                   {new Date(prompt.createdAt).toLocaleDateString("zh-CN")}
                 </div>
@@ -366,7 +366,7 @@ function DetailModal({ prompt: initialPrompt, onClose, onCopy, onUpdate, onPubli
                     <button
                       onClick={handleWithdraw}
                       disabled={withdrawing}
-                      className="flex items-center justify-center px-2 py-1.5 sm:px-4 sm:py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex items-center justify-center px-2 py-1.5 sm:px-4 sm:py-2.5 bg-gray-100 dark:bg-dark-bg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-dark-text text-sm font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       title="撤回发布"
                     >
                       <UndoIcon />

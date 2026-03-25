@@ -51,13 +51,13 @@ function CommunityPromptCard({
 
   return (
     <div
-      className="bg-white rounded-2xl p-5 border border-gray-100 hover:border-blue-200 hover:shadow-md transition-all cursor-pointer group"
+      className="bg-white dark:bg-dark-bgSecondary rounded-2xl p-5 border border-gray-100 dark:border-dark-border hover:border-blue-200 dark:hover:border-blue-700 hover:shadow-md dark:hover:shadow-none transition-all cursor-pointer group"
       onClick={handleView}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold text-gray-900 leading-snug mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-dark-text leading-snug mb-2 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
             {prompt.title}
           </h3>
           <div className="flex flex-wrap items-center gap-2">
@@ -65,7 +65,7 @@ function CommunityPromptCard({
               categorySlug={prompt.category_slug}
               categoryName={prompt.category_name}
             />
-            <span className="text-xs text-gray-400 bg-gray-50 px-2.5 py-1 rounded-full font-medium">
+            <span className="text-xs text-gray-400 dark:text-dark-textSecondary bg-gray-50 dark:bg-dark-bg px-2.5 py-1 rounded-full font-medium">
               {prompt.model}
             </span>
           </div>
@@ -74,7 +74,7 @@ function CommunityPromptCard({
 
       {/* Content Preview */}
       <div className="mb-4">
-        <p className="text-xs text-gray-500 leading-relaxed line-clamp-3">
+        <p className="text-xs text-gray-500 dark:text-dark-textSecondary leading-relaxed line-clamp-3">
           {prompt.description || prompt.content}
         </p>
       </div>
@@ -85,13 +85,13 @@ function CommunityPromptCard({
           {prompt.tags.slice(0, 3).map((tag, index) => (
             <span
               key={index}
-              className="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-md"
+              className="text-xs text-gray-400 dark:text-dark-textSecondary bg-gray-50 dark:bg-dark-bg px-2 py-0.5 rounded-md"
             >
               #{tag}
             </span>
           ))}
           {prompt.tags.length > 3 && (
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-gray-400 dark:text-dark-textSecondary">
               +{prompt.tags.length - 3}
             </span>
           )}
@@ -99,7 +99,7 @@ function CommunityPromptCard({
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-50">
+      <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-50 dark:border-dark-border">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           {/* Author */}
           <button
@@ -107,7 +107,7 @@ function CommunityPromptCard({
               e.stopPropagation();
               if (onShowUserProfile) onShowUserProfile(prompt.user_id);
             }}
-            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+            className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-dark-textSecondary hover:text-gray-600 dark:hover:text-dark-text transition-colors flex-shrink-0"
           >
             <UserAvatar
               src={prompt.user_avatar_url}
@@ -121,11 +121,11 @@ function CommunityPromptCard({
 
           {/* Stats - hide on very small screens */}
           <div className="hidden sm:flex items-center gap-2">
-            <div className="flex items-center gap-1 text-xs text-gray-400">
+            <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-dark-textSecondary">
               <ViewIcon />
               <span>{prompt.view_count || 0}</span>
             </div>
-            <div className="flex items-center gap-1 text-xs text-gray-400">
+            <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-dark-textSecondary">
               <CopySmallIcon />
               <span>{prompt.copy_count || 0}</span>
             </div>
@@ -149,7 +149,7 @@ function CommunityPromptCard({
           <button
             onClick={handleCopy}
             disabled={copying}
-            className="flex items-center gap-1 px-2 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-1 px-2 py-1.5 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 text-xs font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             title={user ? "复制到我的库" : "复制提示词内容"}
           >
             <CopySmallIcon />

@@ -104,10 +104,10 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
         showHeader={false}
       >
         {/* Custom header content */}
-        <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-4 border-b border-gray-50">
+        <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-4 border-b border-gray-50 dark:border-dark-border">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
-              <h2 className="text-lg font-semibold text-gray-900 leading-snug mb-2.5">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-dark-text leading-snug mb-2.5">
                 {prompt.title}
               </h2>
               <div className="flex flex-wrap items-center gap-2">
@@ -115,14 +115,14 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
                   categorySlug={prompt.category_slug}
                   categoryName={prompt.category_name}
                 />
-                <span className="text-xs text-gray-400 bg-gray-50 px-2.5 py-1 rounded-full font-medium">
+                <span className="text-xs text-gray-400 dark:text-dark-textSecondary bg-gray-50 dark:bg-dark-bg px-2.5 py-1 rounded-full font-medium">
                   {prompt.model}
                 </span>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+              className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full bg-gray-100 dark:bg-dark-bg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
             >
               <CloseIcon />
             </button>
@@ -133,7 +133,7 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
             onClick={() => {
               if (onShowUserProfile) onShowUserProfile(prompt.user_id);
             }}
-            className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-50 w-full hover:bg-gray-50 -mx-2 px-2 py-1 rounded-lg transition-colors text-left"
+            className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-50 dark:border-dark-border w-full hover:bg-gray-50 dark:hover:bg-dark-bg -mx-2 px-2 py-1 rounded-lg transition-colors text-left"
           >
             <UserAvatar
               src={prompt.user_avatar_url}
@@ -141,10 +141,10 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
               size="md"
             />
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-gray-700 truncate">
+              <p className="text-xs font-medium text-gray-700 dark:text-dark-text truncate">
                 {prompt.user_display_name || "匿名用户"}
               </p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-400 dark:text-dark-textSecondary">
                 发布于 {new Date(prompt.published_at).toLocaleString("zh-CN")}
               </p>
             </div>
@@ -155,7 +155,7 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
         {/* Description */}
         {prompt.description && (
           <div className="px-4 sm:px-6 py-4 bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100">
-            <p className="text-sm text-gray-700 leading-relaxed">
+            <p className="text-sm text-gray-700 dark:text-dark-text leading-relaxed">
               {prompt.description}
             </p>
           </div>
@@ -164,7 +164,7 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
         {/* Content */}
         <div className="px-4 sm:px-6 py-5 overflow-y-auto" style={{ maxHeight: "calc(85vh - 320px)" }}>
           <div className="bg-gray-50 rounded-2xl p-4">
-            <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+            <p className="text-sm text-gray-700 dark:text-dark-text leading-relaxed whitespace-pre-wrap">
               {prompt.content}
             </p>
           </div>
@@ -185,18 +185,18 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
         </div>
 
         {/* Footer */}
-        <div className="px-4 sm:px-6 pb-4 sm:pb-6 pt-3 border-t border-gray-50">
+        <div className="px-4 sm:px-6 pb-4 sm:pb-6 pt-3 border-t border-gray-50 dark:border-dark-border">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 sm:gap-4">
-              <div className="flex items-center gap-1 text-xs text-gray-400">
+              <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-dark-textSecondary">
                 <ViewIcon />
                 <span className="hidden sm:inline">浏览</span> {viewCount}
               </div>
-              <div className="flex items-center gap-1 text-xs text-gray-400">
+              <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-dark-textSecondary">
                 <CopySmallIcon />
                 <span className="hidden sm:inline">复制</span> {prompt.copy_count || 0}
               </div>
-              <div className="hidden sm:flex items-center gap-1.5 text-xs text-gray-400">
+              <div className="hidden sm:flex items-center gap-1.5 text-xs text-gray-400 dark:text-dark-textSecondary">
                 <DateIcon />
                 <span>{new Date(prompt.published_at).toLocaleDateString("zh-CN")}</span>
               </div>
@@ -218,7 +218,7 @@ function CommunityDetailModal({ prompt, user, userLikes, userFavorites, onClose,
                 <button
                   onClick={handleWithdraw}
                   disabled={withdrawing}
-                  className="flex items-center justify-center px-2 py-1.5 sm:px-3 sm:py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center justify-center px-2 py-1.5 sm:px-3 sm:py-1.5 bg-gray-100 dark:bg-dark-bg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-dark-text text-xs font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   title="撤回发布"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

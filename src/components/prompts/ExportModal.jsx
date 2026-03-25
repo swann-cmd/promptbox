@@ -147,11 +147,11 @@ function ExportModal({ onClose, prompts, categories, onError }) {
 
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6">
+      <div className="bg-white dark:bg-dark-bgSecondary rounded-3xl shadow-2xl w-full max-w-md p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-base font-semibold text-gray-900">导出 Prompts</h2>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-dark-text">导出 Prompts</h2>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-dark-bg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
             <CloseIcon />
           </button>
         </div>
@@ -159,10 +159,10 @@ function ExportModal({ onClose, prompts, categories, onError }) {
         {/* Content */}
         <div className="space-y-4">
           {/* 导出统计 */}
-          <div className="bg-blue-50 rounded-xl p-3">
+          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3">
             <div className="flex items-start gap-2">
               <DownloadIcon />
-              <div className="text-xs text-blue-700">
+              <div className="text-xs text-blue-700 dark:text-blue-300">
                 <p className="font-medium mb-1">导出预览</p>
                 <p>当前可导出 <span className="font-semibold">{filteredPrompts.length}</span> 条提示词</p>
               </div>
@@ -171,9 +171,9 @@ function ExportModal({ onClose, prompts, categories, onError }) {
 
           {/* 分类筛选 */}
           <div>
-            <label className="text-xs font-medium text-gray-500 block mb-1.5">筛选分类</label>
+            <label className="text-xs font-medium text-gray-500 dark:text-dark-textSecondary block mb-1.5">筛选分类</label>
             <select
-              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all bg-white"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-dark-border text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all bg-white dark:bg-dark-bg text-gray-900 dark:text-dark-text"
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
             >
@@ -186,7 +186,7 @@ function ExportModal({ onClose, prompts, categories, onError }) {
 
           {/* 导出格式 */}
           <div>
-            <label className="text-xs font-medium text-gray-500 block mb-1.5">导出格式</label>
+            <label className="text-xs font-medium text-gray-500 dark:text-dark-textSecondary block mb-1.5">导出格式</label>
             <div className="grid grid-cols-3 gap-2">
               {[
                 { value: 'csv', label: 'CSV', desc: '表格数据' },
@@ -198,19 +198,19 @@ function ExportModal({ onClose, prompts, categories, onError }) {
                   onClick={() => setFormat(fmt.value)}
                   className={`p-3 rounded-xl border-2 text-center transition-all ${
                     format === fmt.value
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                      : 'border-gray-200 dark:border-dark-border bg-white dark:bg-dark-bg text-gray-600 dark:text-dark-text hover:border-gray-300 dark:hover:border-gray-600'
                   }`}
                 >
                   <div className="text-xs font-semibold mb-0.5">{fmt.label}</div>
-                  <div className="text-xs text-gray-500">{fmt.desc}</div>
+                  <div className="text-xs text-gray-500 dark:text-dark-textSecondary">{fmt.desc}</div>
                 </button>
               ))}
             </div>
           </div>
 
           {/* 格式说明 */}
-          <div className="text-xs text-gray-500 bg-gray-50 rounded-xl p-3">
+          <div className="text-xs text-gray-500 dark:text-dark-textSecondary bg-gray-50 dark:bg-dark-bg rounded-xl p-3">
             <p className="font-medium mb-1">格式说明：</p>
             <ul className="space-y-0.5 ml-4">
               <li>• <strong>CSV</strong>：适合 Excel 编辑，与导入格式兼容</li>
@@ -222,11 +222,11 @@ function ExportModal({ onClose, prompts, categories, onError }) {
 
         {/* Footer */}
         <div className="flex gap-3 mt-5">
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors">取消</button>
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-dark-border text-sm font-medium text-gray-600 dark:text-dark-text hover:bg-gray-50 dark:hover:bg-dark-bg transition-colors">取消</button>
           <button
             onClick={handleExport}
             disabled={exporting || filteredPrompts.length === 0}
-            className="flex-1 py-2.5 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex-1 py-2.5 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {exporting ? "导出中..." : `导出 ${filteredPrompts.length} 条`}
           </button>
