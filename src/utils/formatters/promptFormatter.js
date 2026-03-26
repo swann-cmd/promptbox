@@ -4,6 +4,8 @@
  * 将数据库原始数据转换为应用使用的格式
  */
 
+import { PROMPT_STATUS } from '../../constants/community';
+
 /**
  * 格式化标签验证函数（防止 XSS）
  * 使用白名单方法，拒绝所有包含 HTML 实体的标签
@@ -125,7 +127,7 @@ export function createCommunityPromptMap(communityPrompts) {
   if (!communityPrompts) return map;
 
   communityPrompts.forEach((cp) => {
-    if (cp.status === 'published') {
+    if (cp.status === PROMPT_STATUS.PUBLISHED) {
       map.set(cp.prompt_id, cp.id);
     }
   });

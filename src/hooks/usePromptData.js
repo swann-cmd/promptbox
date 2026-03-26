@@ -4,10 +4,11 @@
  * 从 App.jsx 提取出来的提示词 CRUD 逻辑
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { formatPromptData, createCommunityPromptMap } from '../utils/formatters/promptFormatter';
 import { validatePrompt, sanitizeInput } from '../utils/sanitize';
+import { PROMPT_STATUS } from '../constants/community';
 
 /**
  * 自定义 Hook: 管理提示词数据
@@ -18,6 +19,9 @@ export function usePromptData(userId) {
   const [prompts, setPrompts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // 使用 ref 存储乐观更新前的状态，用于错误回滚
+  const previousPromptRef = useRef(null);
 
   /**
    * 获取提示词列表
@@ -43,7 +47,7 @@ export function usePromptData(userId) {
         .from("community_prompts")
         .select("id, prompt_id, status")
         .eq("user_id", userId)
-        .eq("status", "published");
+        .eq("status", PROMPT_STATUS.PUBLISHED);
 
       // 创建映射：prompt_id -> community_prompt_id
       const communityPromptMap = createCommunityPromptMap(communityData);
@@ -129,7 +133,7 @@ export function usePromptData(userId) {
         .from("community_prompts")
         .select("id, status")
         .eq("prompt_id", id)
-        .eq("status", "published")
+        .eq("status", PROMPT_STATUS.PUBLISHED)
         .single();
 
       const isPublishedToCommunity = !!communityData;
@@ -167,10 +171,10 @@ export function usePromptData(userId) {
         isPublishedToCommunity
       };
 
-      // 保存旧状态以便错误时回滚
-      let previousPrompt = null;
+      // 保存旧状态到 ref 以便错误时回滚（避免闭包陷阱）
+      previousPromptRef.current = null;
       setPrompts(prev => {
-        previousPrompt = prev.find(p => p.id === id);
+        previousPromptRef.current = prev.find(p => p.id === id);
         return prev; // 只读取，不修改
       });
 
@@ -180,9 +184,9 @@ export function usePromptData(userId) {
       return { success: true, prompt: updatedPrompt };
     } catch (err) {
       console.error("更新失败:", err);
-      // 回滚乐观更新
-      if (previousPrompt) {
-        setPrompts(prev => prev.map(p => p.id === id ? previousPrompt : p));
+      // 回滚乐观更新（使用 ref 确保获取到正确的状态）
+      if (previousPromptRef.current) {
+        setPrompts(prev => prev.map(p => p.id === id ? previousPromptRef.current : p));
       }
       throw err;
     }

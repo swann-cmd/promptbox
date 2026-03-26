@@ -135,13 +135,16 @@ function MainApp({ user, userProfile, setUserProfile, onLogout, onShowCommunity,
     );
   };
 
-  const handleImport = async (data) => {
-    // 使用 categories 构建分类映射
-    const categoryMap = {};
+  // 使用 useMemo 缓存分类映射，避免每次渲染重新创建
+  const categoryMap = useMemo(() => {
+    const map = {};
     categories.forEach(cat => {
-      categoryMap[cat.name] = cat.id;
+      map[cat.name] = cat.id;
     });
+    return map;
+  }, [categories]);
 
+  const handleImport = async (data) => {
     // 导入数据
     const { sanitizeInput } = await import("./utils/sanitize");
     const promptsToInsert = data.map(item => ({

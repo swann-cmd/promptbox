@@ -6,7 +6,8 @@ import CommunityDetailModal from "./CommunityDetailModal";
 import { SearchIcon, LoadingSpinner, EmptyStateIcon, CloseIcon } from "../ui/icons";
 import { SearchInput, LoadingState, EmptyState } from "../ui";
 import { formatCommunityPromptData, fetchUserInteractions } from "../../utils/community";
-import { COMMUNITY_MAX_PROMPTS, COMMUNITY_TAB } from "../../constants/community";
+import { COMMUNITY_MAX_PROMPTS, COMMUNITY_TAB, PROMPT_STATUS } from "../../constants/community";
+import { useDebounce } from "../../hooks/useDebounce";
 
 /**
  * 社区广场主页面
@@ -42,7 +43,7 @@ function CommunityPage({ user, onClose, onError, onShowUserProfile }) {
       let query = supabase
         .from("community_prompts")
         .select("*")
-        .eq("status", "published");
+        .eq("status", PROMPT_STATUS.PUBLISHED);
 
       if (activeTab === "latest") {
         query = query.order("created_at", { ascending: false });
@@ -127,6 +128,9 @@ function CommunityPage({ user, onClose, onError, onShowUserProfile }) {
     }
   }, [user, loadUserInteractions]);
 
+  // 防抖搜索词，减少频繁过滤
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
   // 过滤逻辑 - 使用 useMemo 优化性能，避免重复的 toLowerCase 调用
   const filteredPrompts = useMemo(() => {
     let filtered = prompts;
@@ -136,9 +140,9 @@ function CommunityPage({ user, onClose, onError, onShowUserProfile }) {
       filtered = filtered.filter((p) => p.category_slug === activeCategory);
     }
 
-    // 搜索过滤（只在有搜索词时执行）
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
+    // 搜索过滤（使用防抖后的值）
+    if (debouncedSearchQuery) {
+      const query = debouncedSearchQuery.toLowerCase();
       filtered = filtered.filter((p) => {
         // 快速检查：title 和 description 较短，优先检查
         const titleMatch = p.title.toLowerCase().includes(query);
@@ -158,7 +162,7 @@ function CommunityPage({ user, onClose, onError, onShowUserProfile }) {
     }
 
     return filtered;
-  }, [prompts, activeCategory, searchQuery]);
+  }, [prompts, activeCategory, debouncedSearchQuery]);
 
   // 提取唯一分类 - 优化为 useMemo 避免不必要的重新计算
   const categories = useMemo(() => {
